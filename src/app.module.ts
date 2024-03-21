@@ -11,6 +11,12 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as process from 'process';
+import { Category } from './category/entities/category.entity';
+import { Company } from './company/entities/company.entity';
+import { CompanyMetadatum } from './company-metadata/entities/company-metadatum.entity';
+import { Service } from './service/entities/service.entity';
+import { Tag } from './tag/entities/tag.entity';
+import { User } from './user/entities/user.entity';
 
 @Module( {
   imports: [ConfigModule.forRoot( { isGlobal: true } ),
@@ -33,8 +39,11 @@ import * as process from 'process';
                 synchronize: true,
                 entities: [__dirname + '/**/*.entity{.js, .ts}']
               }),
+
               inject: [ConfigService]
-            })],
+            }),
+            TypeOrmModule.forFeature([Category, Company, CompanyMetadatum, Service, Tag, User])
+  ],
   controllers: [AppController],
   providers: [AppService],
 } )

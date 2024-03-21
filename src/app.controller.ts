@@ -10,8 +10,8 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('/profile')
-  getProfile(): string {
-    return this.appService.getProfile();
+  @Get( '/all' )
+  async getAllCompany(): Promise<any> {
+    return this.appService.getAllCompany();
   }
 }
