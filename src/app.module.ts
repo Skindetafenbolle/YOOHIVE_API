@@ -7,10 +7,36 @@ import { CategoryModule } from './category/category.module';
 import { CompanyMetadataModule } from './company-metadata/company-metadata.module';
 import { TagModule } from './tag/tag.module';
 import { ServiceModule } from './service/service.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import * as process from 'process';
 
-@Module({
-  imports: [CompanyModule, UserModule, CategoryModule, CompanyMetadataModule, TagModule, ServiceModule],
+@Module( {
+  imports: [ConfigModule.forRoot( { isGlobal: true } ),
+            CompanyModule,
+            UserModule,
+            CategoryModule,
+            CompanyMetadataModule,
+            TagModule,
+            ServiceModule,
+            AuthModule,
+            TypeOrmModule.forRootAsync({
+              imports: [ConfigModule],
+              useFactory: (configService: ConfigService) => ({
+                type: 'postgres',
+                host: configService.get('DB_HOST'),
+                port: configService.get('DB_PORT'),
+                username: configService.get('DB_USERNAME'),
+                password: configService.get('DB_PASSWORD'),
+                database: configService.get('DB_NAME'),
+                synchronize: true,
+                entities: [__dirname + '/**/*.entity{.js, .ts}']
+              }),
+              inject: [ConfigService]
+            })],
   controllers: [AppController],
   providers: [AppService],
-})
-export class AppModule {}
+} )
+export class AppModule {
+}
