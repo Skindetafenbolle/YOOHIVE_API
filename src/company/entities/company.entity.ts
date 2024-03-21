@@ -18,7 +18,7 @@ import { Service } from '../../service/entities/service.entity';
 @Entity()
 export class Company {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column()
   name: string;
@@ -38,26 +38,32 @@ export class Company {
   @Column()
   affiliation: string;
 
-  @ManyToMany(() => Category, category => category.companies)
+  @ManyToMany(() => Category, (category) => category.companies)
   @JoinTable()
-  categories: Category[]
+  categories: Category[];
 
-  @ManyToMany(() => Tag, tag => tag.companies)
+  @ManyToMany(() => Tag, (tag) => tag.companies)
   @JoinTable()
-  tags: Tag[]
+  tags: Tag[];
 
-  @OneToMany(() => User, user => user.companies, {onDelete: 'CASCADE'})
-  users: User[]
+  @OneToMany(() => User, (user) => user.companies, { onDelete: 'CASCADE' })
+  users: User[];
 
-  @OneToMany(() => CompanyMetadatum, companymetadatum => companymetadatum.companies, {onDelete: 'CASCADE'})
-  companymetadatums: CompanyMetadatum[]
+  @OneToMany(
+    () => CompanyMetadatum,
+    (companymetadatum) => companymetadatum.companies,
+    { onDelete: 'CASCADE' },
+  )
+  companymetadatums: CompanyMetadatum[];
 
-  @OneToMany(() => Service, service => service.companies, {onDelete: 'CASCADE'})
-  services: Service[]
+  @OneToMany(() => Service, (service) => service.companies, {
+    onDelete: 'CASCADE',
+  })
+  services: Service[];
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

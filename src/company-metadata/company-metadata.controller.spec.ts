@@ -11,7 +11,9 @@ describe('CompanyMetadataController', () => {
       providers: [CompanyMetadataService],
     }).compile();
 
-    controller = module.get<CompanyMetadataController>(CompanyMetadataController);
+    controller = module.get<CompanyMetadataController>(
+      CompanyMetadataController,
+    );
   });
 
   it('should be defined', () => {

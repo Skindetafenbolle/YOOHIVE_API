@@ -11,7 +11,7 @@ import { Company } from '../../company/entities/company.entity';
 @Entity()
 export class Category {
   @PrimaryGeneratedColumn()
-  id: number
+  id: number;
 
   @Column()
   name: string;
@@ -19,13 +19,12 @@ export class Category {
   @Column()
   slug: string;
 
-  @ManyToMany(() => Company, company => company.categories)
-  companies: Company[]
+  @ManyToMany(() => Company, (company) => company.categories)
+  companies: Company[];
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
-
+  updatedAt: Date;
 }

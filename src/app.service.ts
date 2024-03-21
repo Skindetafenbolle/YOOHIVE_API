@@ -6,11 +6,11 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class AppService {
   constructor(
-    @InjectRepository(Company) private companyRepo: Repository<Company>
+    @InjectRepository(Company) private companyRepo: Repository<Company>,
   ) {}
 
-  getAllCompany(){
-    return `${this.companyRepo.find()} + dsds`
+  getAllCompany() {
+    return `${this.companyRepo.find()} + dsds`;
   }
   getHello(): string {
     return 'Hello World!';

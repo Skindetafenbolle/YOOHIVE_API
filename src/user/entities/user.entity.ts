@@ -1,8 +1,15 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
 
 @Entity()
-export class User{
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -18,12 +25,12 @@ export class User{
   @Column()
   role: string;
 
-  @ManyToOne(() => Company, company => company.users)
-  companies: Company
+  @ManyToOne(() => Company, (company) => company.users)
+  companies: Company;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

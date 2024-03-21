@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
 
 @Entity()
@@ -12,12 +19,12 @@ export class Tag {
   @Column()
   icon: string;
 
-  @ManyToMany(() => Company, company => company.tags)
-  companies: Company[]
+  @ManyToMany(() => Company, (company) => company.tags)
+  companies: Company[];
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

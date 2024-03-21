@@ -29,18 +29,18 @@ export class Service {
   @Column()
   description: string;
 
-  @ManyToOne(() => Service, service => service.sub_service)
-  parent: Service
+  @ManyToOne(() => Service, (service) => service.sub_service)
+  parent: Service;
 
-  @OneToMany(() => Service, service => service.parent)
-  sub_service: Service[]
+  @OneToMany(() => Service, (service) => service.parent)
+  sub_service: Service[];
 
-  @ManyToOne(() => Company, company => company.services)
-  companies: Company
+  @ManyToOne(() => Company, (company) => company.services)
+  companies: Company;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

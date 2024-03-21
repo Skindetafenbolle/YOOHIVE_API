@@ -10,7 +10,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get( '/all' )
+  @Get('/all')
   async getAllCompany(): Promise<any> {
     return this.appService.getAllCompany();
   }

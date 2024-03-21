@@ -1,4 +1,11 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
 
 @Entity()
@@ -12,12 +19,12 @@ export class CompanyMetadatum {
   @Column('json')
   value: object;
 
-  @ManyToOne(() => Company, company => company.companymetadatums)
-  companies: Company
+  @ManyToOne(() => Company, (company) => company.companymetadatums)
+  companies: Company;
 
   @CreateDateColumn()
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date
+  updatedAt: Date;
 }

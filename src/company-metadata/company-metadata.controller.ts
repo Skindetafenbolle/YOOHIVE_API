@@ -1,11 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { CompanyMetadataService } from './company-metadata.service';
 import { CreateCompanyMetadatumDto } from './dto/create-company-metadatum.dto';
 import { UpdateCompanyMetadatumDto } from './dto/update-company-metadatum.dto';
 
 @Controller('company-metadata')
 export class CompanyMetadataController {
-  constructor(private readonly companyMetadataService: CompanyMetadataService) {}
+  constructor(
+    private readonly companyMetadataService: CompanyMetadataService,
+  ) {}
 
   @Post()
   create(@Body() createCompanyMetadatumDto: CreateCompanyMetadatumDto) {
@@ -23,7 +33,10 @@ export class CompanyMetadataController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCompanyMetadatumDto: UpdateCompanyMetadatumDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateCompanyMetadatumDto: UpdateCompanyMetadatumDto,
+  ) {
     return this.companyMetadataService.update(+id, updateCompanyMetadatumDto);
   }
 
