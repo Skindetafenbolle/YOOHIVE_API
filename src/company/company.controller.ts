@@ -44,4 +44,12 @@ export class CompanyController {
   async getCompanyWithRelations(@Param('id') companyId: number): Promise<Company> {
     return this.companyService.getCompanyWithRelations(companyId);
   }
+
+  @Post(':companyId/users/:userId')
+  async addUserToCompany(
+    @Param('companyId') companyId: number,
+    @Param('userId') userId: number,
+  ): Promise<Company> {
+    return this.companyService.addUserToCompany(userId, companyId);
+  }
 }

@@ -5,6 +5,7 @@ import { Tag } from '../tag/entities/tag.entity';
 import { Repository } from 'typeorm';
 import { Category } from '../category/entities/category.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class CompanyService {
@@ -17,6 +18,8 @@ export class CompanyService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(CompanyMetadatum)
     private readonly companyMetadatumRepository: Repository<CompanyMetadatum>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>
   ) {}
 
   async createCompany(
@@ -67,9 +70,29 @@ export class CompanyService {
   async getCompanyWithRelations(companyId: number): Promise<Company> {
     return await this.companyRepository.findOne( {
       where: {
-        id: companyId
+        id: companyId,
       },
-      relations: ['tags', 'companymetadatums', 'categories'],
+      relations: ['tags', 'companymetadatums', 'categories', 'users'],
     });
+  }
+
+  async addUserToCompany(userId: number, companyId: number): Promise<Company> {
+    const company = await this.companyRepository.findOne({
+      where: {
+        id: companyId,
+      },
+      relations: ['users'] });
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    company.users.push(user);
+
+    return await this.companyRepository.save(company);
   }
 }
