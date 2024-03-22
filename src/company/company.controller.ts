@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
@@ -41,7 +41,9 @@ export class CompanyController {
   }
 
   @Get(':id')
-  async getCompanyWithRelations(@Param('id') companyId: number): Promise<Company> {
+  async getCompanyWithRelations(
+    @Param('id') companyId: number,
+  ): Promise<Company> {
     return this.companyService.getCompanyWithRelations(companyId);
   }
 
@@ -51,5 +53,13 @@ export class CompanyController {
     @Param('userId') userId: number,
   ): Promise<Company> {
     return this.companyService.addUserToCompany(userId, companyId);
+  }
+
+  @Delete(':companyId/users/:userId')
+  async removeUserFromCompany(
+    @Param('companyId') companyId: number,
+    @Param('userId') userId: number,
+  ): Promise<Company> {
+    return this.companyService.removeUserFromCompany(companyId, userId);
   }
 }

@@ -19,7 +19,7 @@ export class CompanyService {
     @InjectRepository(CompanyMetadatum)
     private readonly companyMetadatumRepository: Repository<CompanyMetadatum>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async createCompany(
@@ -52,8 +52,14 @@ export class CompanyService {
     return await this.companyRepository.save(company);
   }
 
-  async addCompanyMetadatum(companyId: number, type: string, value: object): Promise<CompanyMetadatum> {
-    const company = await this.companyRepository.findOne({ where: { id: companyId } });
+  async addCompanyMetadatum(
+    companyId: number,
+    type: string,
+    value: object,
+  ): Promise<CompanyMetadatum> {
+    const company = await this.companyRepository.findOne({
+      where: { id: companyId },
+    });
 
     if (!company) {
       throw new Error('Company not found');
@@ -68,7 +74,7 @@ export class CompanyService {
   }
 
   async getCompanyWithRelations(companyId: number): Promise<Company> {
-    return await this.companyRepository.findOne( {
+    return await this.companyRepository.findOne({
       where: {
         id: companyId,
       },
@@ -81,7 +87,8 @@ export class CompanyService {
       where: {
         id: companyId,
       },
-      relations: ['users'] });
+      relations: ['users'],
+    });
     if (!company) {
       throw new Error('Company not found');
     }
@@ -94,5 +101,37 @@ export class CompanyService {
     company.users.push(user);
 
     return await this.companyRepository.save(company);
+  }
+
+  async removeUserFromCompany(companyId: number, userId: number): Promise<Company> {
+    const company = await this.companyRepository.findOne({
+      where: {
+        id: companyId,
+      },
+      relations: ['users'],
+    });
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const userIdString = userId.toString();
+    const userIndex = company.users.findIndex(u => u.id.toString() === userIdString);
+
+    if (userIndex === -1) {
+      throw new Error('User not found in company');
+    }
+
+    company.users.splice(userIndex, 1);
+
+    try {
+      return await this.companyRepository.save( company );
+    } catch (error) {
+      throw new Error('Error saving changes');
+    }
   }
 }
