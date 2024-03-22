@@ -11,7 +11,6 @@ import {
 import { Category } from '../../category/entities/category.entity';
 import { User } from '../../user/entities/user.entity';
 import { CompanyMetadatum } from '../../company-metadata/entities/company-metadatum.entity';
-import { metadata } from 'reflect-metadata/no-conflict';
 import { Tag } from '../../tag/entities/tag.entity';
 import { Service } from '../../service/entities/service.entity';
 
@@ -29,8 +28,8 @@ export class Company {
   @Column()
   address: string;
 
-  @Column()
-  coordinates: string;
+  @Column({ type: 'json' })
+  geodata: object;
 
   @Column()
   source: string;
