@@ -103,7 +103,10 @@ export class CompanyService {
     return await this.companyRepository.save(company);
   }
 
-  async removeUserFromCompany(companyId: number, userId: number): Promise<Company> {
+  async removeUserFromCompany(
+    companyId: number,
+    userId: number,
+  ): Promise<Company> {
     const company = await this.companyRepository.findOne({
       where: {
         id: companyId,
@@ -120,7 +123,9 @@ export class CompanyService {
     }
 
     const userIdString = userId.toString();
-    const userIndex = company.users.findIndex(u => u.id.toString() === userIdString);
+    const userIndex = company.users.findIndex(
+      (u) => u.id.toString() === userIdString,
+    );
 
     if (userIndex === -1) {
       throw new Error('User not found in company');
@@ -129,7 +134,7 @@ export class CompanyService {
     company.users.splice(userIndex, 1);
 
     try {
-      return await this.companyRepository.save( company );
+      return await this.companyRepository.save(company);
     } catch (error) {
       throw new Error('Error saving changes');
     }
