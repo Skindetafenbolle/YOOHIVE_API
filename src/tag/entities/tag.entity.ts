@@ -16,9 +16,6 @@ export class Tag {
   @Column()
   name: string;
 
-  @Column()
-  icon: string;
-
   @ManyToMany(() => Company, (company) => company.tags)
   companies: Company[];
 

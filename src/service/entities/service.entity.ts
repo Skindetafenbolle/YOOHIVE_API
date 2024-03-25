@@ -29,7 +29,7 @@ export class Service {
   @Column({ default: true })
   isMain: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
   @ManyToOne(() => Company, (company) => company.services)

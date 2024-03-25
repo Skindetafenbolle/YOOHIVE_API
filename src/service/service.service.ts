@@ -1,26 +1,49 @@
 import { Injectable } from '@nestjs/common';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
+import { Repository } from 'typeorm';
+import { Service } from './entities/service.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Company } from '../company/entities/company.entity';
 
 @Injectable()
 export class ServiceService {
-  create(createServiceDto: CreateServiceDto) {
-    return 'This action adds a new service';
-  }
+  constructor(
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
+  ) {}
 
-  findAll() {
-    return `This action returns all service`;
-  }
+  async createServices(
+    company: Company,
+    servicesData: any[],
+  ): Promise<Service[]> {
+    const services: Service[] = [];
 
-  findOne(id: number) {
-    return `This action returns a #${id} service`;
-  }
+    for (const serviceData of servicesData) {
+      const service = new Service();
+      service.name = serviceData.name;
+      service.price = serviceData.price.value;
+      service.currency = serviceData.price.currency;
+      service.duration_minutes = serviceData.duration_minutes;
+      service.description = serviceData.description;
+      service.companies = company; // Установка связи с компанией
 
-  update(id: number, updateServiceDto: UpdateServiceDto) {
-    return `This action updates a #${id} service`;
-  }
+      console.log('Service before save:', service); // Отладочный вывод
 
-  remove(id: number) {
-    return `This action removes a #${id} service`;
+      if (serviceData.subServices && serviceData.subServices.length > 0) {
+        service.subServices = await this.createServices(
+          company,
+          serviceData.subServices,
+        );
+      }
+
+      services.push(service);
+    }
+
+    console.log('Services before save:', services);
+
+    const savedServices = await this.serviceRepository.save(services);
+
+    console.log('Saved services:', savedServices); // Отладочный вывод
+
+    return savedServices;
   }
 }

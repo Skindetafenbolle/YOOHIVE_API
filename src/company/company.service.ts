@@ -6,6 +6,11 @@ import { Repository } from 'typeorm';
 import { Category } from '../category/entities/category.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
 import { User } from '../user/entities/user.entity';
+import { TagService } from '../tag/tag.service';
+import { CompanyMetadataService } from '../company-metadata/company-metadata.service';
+import { CategoryService } from '../category/category.service';
+import { Service } from '../service/entities/service.entity';
+import { ServiceService } from '../service/service.service';
 
 @Injectable()
 export class CompanyService {
@@ -14,60 +19,19 @@ export class CompanyService {
     private readonly companyRepository: Repository<Company>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    private readonly tagService: TagService,
+    @InjectRepository(Service)
+    private readonly serviceRepository: Repository<Service>,
+    private readonly serviceService: ServiceService,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    private readonly categoryService: CategoryService,
     @InjectRepository(CompanyMetadatum)
     private readonly companyMetadatumRepository: Repository<CompanyMetadatum>,
+    private companyMetadataService: CompanyMetadataService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
-
-  async createCompany(
-    name: string,
-    description: string,
-    address: string,
-    source: string,
-    affiliation: string,
-    tagIds: number[],
-    categoryIds: number[],
-  ): Promise<Company> {
-    const requestOptions = {
-      method: 'GET',
-    };
-    const encodedAddress = encodeURIComponent(address);
-    const geoDataResponse = await fetch(
-      `https://api.geoapify.com/v1/geocode/search?text=${encodedAddress}&format=json&apiKey=258f766d097e435984f577698acb7cc0`,
-      requestOptions,
-    );
-    const geoData: any = await geoDataResponse.json();
-
-    if (geoData.results && geoData.results.length > 0) {
-      const { lon, lat } = geoData.results[0];
-      const geodata = { latitude: lat, longitude: lon };
-
-      const company = this.companyRepository.create({
-        name,
-        description,
-        address,
-        source,
-        affiliation,
-        geodata,
-      });
-
-      if (tagIds && tagIds.length > 0) {
-        company.tags = await this.tagRepository.findByIds(tagIds);
-      }
-
-      if (categoryIds && categoryIds.length > 0) {
-        company.categories =
-          await this.categoryRepository.findByIds(categoryIds);
-      }
-
-      return await this.companyRepository.save(company);
-    } else {
-      throw new Error('Geodata not found for the provided address');
-    }
-  }
 
   async addCompanyMetadatum(
     companyId: number,
@@ -85,7 +49,7 @@ export class CompanyService {
     const metadata = new CompanyMetadatum();
     metadata.type = type;
     metadata.value = value;
-    metadata.companies = company;
+    metadata.company = company;
 
     return await this.companyMetadatumRepository.save(metadata);
   }
@@ -132,19 +96,19 @@ export class CompanyService {
     companyId: number,
     userId: number,
   ): Promise<Company> {
-    const company = await this.companyRepository.findOne( {
+    const company = await this.companyRepository.findOne({
       where: {
         id: companyId,
       },
       relations: ['users'],
-    } );
+    });
     if (!company) {
-      throw new Error( 'Company not found' );
+      throw new Error('Company not found');
     }
 
-    const user = await this.userRepository.findOne( { where: { id: userId } } );
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new Error( 'User not found' );
+      throw new Error('User not found');
     }
 
     const userIdString = userId.toString();
@@ -153,31 +117,31 @@ export class CompanyService {
     );
 
     if (userIndex === -1) {
-      throw new Error( 'User not found in company' );
+      throw new Error('User not found in company');
     }
 
-    company.users.splice( userIndex, 1 );
+    company.users.splice(userIndex, 1);
 
     try {
-      return await this.companyRepository.save( company );
+      return await this.companyRepository.save(company);
     } catch (error) {
-      throw new Error( 'Error saving changes' );
+      throw new Error('Error saving changes');
     }
   }
 
   async removeCompany(companyId: number): Promise<Company> {
-    const company = await this.companyRepository.findOne( {
+    const company = await this.companyRepository.findOne({
       where: {
         id: companyId,
       },
     });
     if (!company) {
-      throw new Error( 'Company not found' );
+      throw new Error('Company not found');
     }
     try {
-      return await this.companyRepository.remove( company );
+      return await this.companyRepository.remove(company);
     } catch (error) {
-      throw new Error( 'Error delete company' );
+      throw new Error('Error delete company');
     }
   }
 
@@ -185,32 +149,129 @@ export class CompanyService {
     return await this.companyRepository.find();
   }
 
-  // async createCompanyFromParser(data: any, source:string, category: string): Promise<Company> {
-  //   const { name, description, address, affiliation, services, tags, schedule, categories } = data;
-  //
-  //   const company = await this.createCompany(name, description, address, source, affiliation, [], []);
-  //
-  //   company.tags = await this.saveTags( tags );
-  //
-  //   company.companymetadatums = await this.saveSchedule( schedule );
-  //
-  //   company.categories = await this.saveCategories( categories );
-  //
-  //   company.services = await this.saveServices( services );
-  //
-  //   return await this.companyRepository.save(company);
-  // }
+  async createCompanyFromParser(
+    data: any,
+    source: string,
+    category: string,
+  ): Promise<Company> {
+    const existingCategory =
+      await this.categoryService.getCategoryByName(category);
+    let categoryObject: Category;
+    if (existingCategory) {
+      categoryObject = existingCategory;
+    } else {
+      categoryObject = await this.categoryService.createCategory(
+        category,
+        category,
+      );
+    }
+    const {
+      name,
+      description,
+      address,
+      affiliation,
+      specialTags,
+      schedule,
+      phones,
+      socialMediaLinks,
+      exampleWorks,
+      languages,
+      servicesData,
+    } = data;
 
-  // private async saveTags(tagsData: any[]): Promise<Tag[]> {
-  // }
-  //
-  // private async saveSchedule(scheduleData: any[]): Promise<CompanyMetadatum[]> {
-  //
-  // }
-  //
-  // private async saveCategories(categoriesData: any[]): Promise<Category[]> {
-  // }
-  //
-  // private async saveServices(servicesData: any[]): Promise<Service[]> {
-  // }
+    const geoData = await this.getGeoData(address);
+
+    const company = await this.createCompany(
+      name,
+      description,
+      address,
+      source,
+      affiliation,
+      geoData,
+    );
+    company.categories = [categoryObject];
+    const tags = await this.tagService.saveTags(specialTags);
+    const languagesArray = await this.tagService.saveLanguages(languages);
+
+    if (!company.tags) {
+      company.tags = [];
+    }
+
+    company.tags = [...company.tags, ...tags, ...languagesArray];
+    const savedCompany = await this.companyRepository.save(company);
+    await this.serviceService.createServices(savedCompany, servicesData);
+
+    if (schedule && schedule.length > 0) {
+      await this.companyMetadataService.saveCompanyMetadata({
+        type: 'schedule',
+        value: schedule,
+        company: savedCompany,
+      });
+    }
+
+    if (phones && phones.length > 0) {
+      await this.companyMetadataService.saveCompanyMetadata({
+        type: 'phones',
+        value: phones,
+        company: savedCompany,
+      });
+    }
+
+    if (socialMediaLinks && socialMediaLinks.length > 0) {
+      await this.companyMetadataService.saveCompanyMetadata({
+        type: 'socialMediaLinks',
+        value: socialMediaLinks,
+        company: savedCompany,
+      });
+    }
+
+    if (exampleWorks && exampleWorks.length > 0) {
+      await this.companyMetadataService.saveCompanyMetadata({
+        type: 'images',
+        value: exampleWorks,
+        company: savedCompany,
+      });
+    }
+
+    return savedCompany;
+  }
+
+  private async createCompany(
+    name: string,
+    description: string,
+    address: string,
+    source: string,
+    affiliation: string,
+    geoData: { latitude: number; longitude: number } | null,
+  ): Promise<Company> {
+    return this.companyRepository.create({
+      name,
+      description,
+      address,
+      source,
+      affiliation,
+      geodata: geoData,
+    });
+  }
+
+  private async getGeoData(
+    address: string,
+  ): Promise<{ latitude: number; longitude: number } | null> {
+    const requestOptions = {
+      method: 'GET',
+    };
+    const encodedAddress = encodeURIComponent(address);
+    const geoDataResponse = await fetch(
+      `https://api.geoapify.com/v1/geocode/search?text=${encodedAddress}&format=json&apiKey=258f766d097e435984f577698acb7cc0`,
+      requestOptions,
+    );
+    const geoData: any = await geoDataResponse.json();
+
+    if (geoData.results && geoData.results.length > 0) {
+      const { lon, lat } = geoData.results[0];
+      return { latitude: lat, longitude: lon };
+    } else {
+      return null;
+    }
+  }
 }

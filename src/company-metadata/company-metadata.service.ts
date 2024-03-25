@@ -1,6 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { CreateCompanyMetadatumDto } from './dto/create-company-metadatum.dto';
-import { UpdateCompanyMetadatumDto } from './dto/update-company-metadatum.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CompanyMetadatum } from './entities/company-metadatum.entity';
+import { Company } from '../company/entities/company.entity';
 
 @Injectable()
-export class CompanyMetadataService {}
+export class CompanyMetadataService {
+  constructor(
+    @InjectRepository(CompanyMetadatum)
+    private companyMetadatumRepository: Repository<CompanyMetadatum>,
+  ) {}
+
+  async saveCompanyMetadata(metadata: {
+    type: string;
+    value: any;
+    company: Company;
+  }): Promise<CompanyMetadatum> {
+    const { type, value, company } = metadata;
+
+    const companyMetadatum = new CompanyMetadatum();
+    companyMetadatum.type = type;
+    companyMetadatum.value = value;
+    companyMetadatum.company = company;
+
+    return await this.companyMetadatumRepository.save(companyMetadatum);
+  }
+}

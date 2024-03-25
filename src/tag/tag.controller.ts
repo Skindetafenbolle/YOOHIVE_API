@@ -17,8 +17,8 @@ export class TagController {
 
   @Post()
   async createTag(@Body() createTagDto: CreateTagDto): Promise<Tag> {
-    const { name, icon } = createTagDto;
-    return this.tagService.createTag(name, icon);
+    const { name } = createTagDto;
+    return this.tagService.createTag(name);
   }
 
   @Get('/all')

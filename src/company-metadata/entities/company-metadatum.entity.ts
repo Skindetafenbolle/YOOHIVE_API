@@ -20,7 +20,7 @@ export class CompanyMetadatum {
   value: object;
 
   @ManyToOne(() => Company, (company) => company.companymetadatums)
-  companies: Company;
+  company: Company;
 
   @CreateDateColumn()
   createdAt: Date;

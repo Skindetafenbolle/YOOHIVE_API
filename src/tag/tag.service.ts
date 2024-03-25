@@ -10,8 +10,8 @@ export class TagService {
     private readonly tagRepository: Repository<Tag>,
   ) {}
 
-  async createTag(name: string, icon: string): Promise<Tag> {
-    const tag = this.tagRepository.create({ name, icon });
+  async createTag(name: string): Promise<Tag> {
+    const tag = this.tagRepository.create({ name });
     return await this.tagRepository.save(tag);
   }
 
@@ -41,5 +41,57 @@ export class TagService {
       throw new NotFoundException('Tag not found');
     }
     return tag;
+  }
+
+  private async saveSpecialTags(specialTags: string[]): Promise<Tag[]> {
+    if (!specialTags || specialTags.length === 0) {
+      return [];
+    }
+
+    const tags: Tag[] = [];
+
+    for (const tagName of specialTags) {
+      let tag: Tag = await this.tagRepository.findOne({
+        where: { name: tagName },
+      });
+
+      if (!tag) {
+        tag = this.tagRepository.create({ name: tagName });
+        tag = await this.tagRepository.save(tag);
+      }
+
+      tags.push(tag);
+    }
+
+    return tags;
+  }
+
+  private async saveSpecialLanguages(languageData: string[]): Promise<Tag[]> {
+    if (!languageData || languageData.length === 0) {
+      return [];
+    }
+
+    const savedLanguages: Tag[] = [];
+
+    for (const languageName of languageData) {
+      let language: Tag = await this.tagRepository.findOne({
+        where: { name: languageName },
+      });
+
+      if (!language) {
+        language = this.tagRepository.create({ name: languageName });
+        language = await this.tagRepository.save(language);
+      }
+
+      savedLanguages.push(language);
+    }
+
+    return savedLanguages;
+  }
+  async saveTags(tagsData: any[]): Promise<Tag[]> {
+    return await this.saveSpecialTags(tagsData);
+  }
+  async saveLanguages(langData: any[]): Promise<Tag[]> {
+    return await this.saveSpecialLanguages(langData);
   }
 }

@@ -8,5 +8,6 @@ import { CompanyMetadatum } from './entities/company-metadatum.entity';
   imports: [TypeOrmModule.forFeature([CompanyMetadatum])],
   controllers: [CompanyMetadataController],
   providers: [CompanyMetadataService],
+  exports: [CompanyMetadataService],
 })
 export class CompanyMetadataModule {}

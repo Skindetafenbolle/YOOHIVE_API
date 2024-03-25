@@ -34,7 +34,7 @@ export class Company {
   @Column()
   source: string;
 
-  @Column()
+  @Column({ nullable: true })
   affiliation: string;
 
   @ManyToMany(() => Category, (category) => category.companies)
@@ -50,7 +50,7 @@ export class Company {
 
   @OneToMany(
     () => CompanyMetadatum,
-    (companymetadatum) => companymetadatum.companies,
+    (companymetadatum) => companymetadatum.company,
     { onDelete: 'CASCADE' },
   )
   companymetadatums: CompanyMetadatum[];

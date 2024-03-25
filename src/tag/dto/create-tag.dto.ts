@@ -4,6 +4,5 @@ export class CreateTagDto {
   @IsNotEmpty()
   name: string;
 
-  @IsNotEmpty()
   icon: string;
 }
