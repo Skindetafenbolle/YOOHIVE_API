@@ -132,19 +132,19 @@ export class CompanyService {
     companyId: number,
     userId: number,
   ): Promise<Company> {
-    const company = await this.companyRepository.findOne({
+    const company = await this.companyRepository.findOne( {
       where: {
         id: companyId,
       },
       relations: ['users'],
-    });
+    } );
     if (!company) {
-      throw new Error('Company not found');
+      throw new Error( 'Company not found' );
     }
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne( { where: { id: userId } } );
     if (!user) {
-      throw new Error('User not found');
+      throw new Error( 'User not found' );
     }
 
     const userIdString = userId.toString();
@@ -153,15 +153,64 @@ export class CompanyService {
     );
 
     if (userIndex === -1) {
-      throw new Error('User not found in company');
+      throw new Error( 'User not found in company' );
     }
 
-    company.users.splice(userIndex, 1);
+    company.users.splice( userIndex, 1 );
 
     try {
-      return await this.companyRepository.save(company);
+      return await this.companyRepository.save( company );
     } catch (error) {
-      throw new Error('Error saving changes');
+      throw new Error( 'Error saving changes' );
     }
   }
+
+  async removeCompany(companyId: number): Promise<Company> {
+    const company = await this.companyRepository.findOne( {
+      where: {
+        id: companyId,
+      },
+    });
+    if (!company) {
+      throw new Error( 'Company not found' );
+    }
+    try {
+      return await this.companyRepository.remove( company );
+    } catch (error) {
+      throw new Error( 'Error delete company' );
+    }
+  }
+
+  async getAllCompanies(): Promise<Company[]> {
+    return await this.companyRepository.find();
+  }
+
+  // async createCompanyFromParser(data: any, source:string, category: string): Promise<Company> {
+  //   const { name, description, address, affiliation, services, tags, schedule, categories } = data;
+  //
+  //   const company = await this.createCompany(name, description, address, source, affiliation, [], []);
+  //
+  //   company.tags = await this.saveTags( tags );
+  //
+  //   company.companymetadatums = await this.saveSchedule( schedule );
+  //
+  //   company.categories = await this.saveCategories( categories );
+  //
+  //   company.services = await this.saveServices( services );
+  //
+  //   return await this.companyRepository.save(company);
+  // }
+
+  // private async saveTags(tagsData: any[]): Promise<Tag[]> {
+  // }
+  //
+  // private async saveSchedule(scheduleData: any[]): Promise<CompanyMetadatum[]> {
+  //
+  // }
+  //
+  // private async saveCategories(categoriesData: any[]): Promise<Category[]> {
+  // }
+  //
+  // private async saveServices(servicesData: any[]): Promise<Service[]> {
+  // }
 }

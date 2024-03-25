@@ -38,6 +38,11 @@ export class CompanyController {
     return this.companyService.addCompanyMetadatum(companyId, type, value);
   }
 
+  @Get('/get/all')
+  async getAllCompany(): Promise<Company[]> {
+    return await this.companyService.getAllCompanies();
+  }
+
   @Get(':id')
   async getCompanyWithRelations(
     @Param('id') companyId: number,
@@ -51,6 +56,13 @@ export class CompanyController {
     @Param('userId') userId: number,
   ): Promise<Company> {
     return this.companyService.addUserToCompany(userId, companyId);
+  }
+
+  @Delete('remove/:id')
+  async removeCompany(
+    @Param('id') id: number
+  ): Promise<Company> {
+    return this.companyService.removeCompany(id)
   }
 
   @Delete(':companyId/users/:userId')
