@@ -15,7 +15,6 @@ export class CompanyController {
       address,
       source,
       affiliation,
-      geodata,
       tagIds,
       categoryIds,
     } = body;
@@ -25,7 +24,6 @@ export class CompanyController {
       address,
       source,
       affiliation,
-      geodata,
       tagIds,
       categoryIds,
     );

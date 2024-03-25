@@ -28,28 +28,45 @@ export class CompanyService {
     address: string,
     source: string,
     affiliation: string,
-    geodata: object,
     tagIds: number[],
     categoryIds: number[],
   ): Promise<Company> {
-    const company = this.companyRepository.create({
-      name,
-      description,
-      address,
-      source,
-      affiliation,
-      geodata,
-    });
+    const requestOptions = {
+      method: 'GET',
+    };
+    const encodedAddress = encodeURIComponent(address);
+    const geoDataResponse = await fetch(
+      `https://api.geoapify.com/v1/geocode/search?text=${encodedAddress}&format=json&apiKey=258f766d097e435984f577698acb7cc0`,
+      requestOptions,
+    );
+    const geoData: any = await geoDataResponse.json();
 
-    if (tagIds && tagIds.length > 0) {
-      company.tags = await this.tagRepository.findByIds(tagIds);
+    if (geoData.results && geoData.results.length > 0) {
+      const { lon, lat } = geoData.results[0];
+      const geodata = { latitude: lat, longitude: lon };
+
+      const company = this.companyRepository.create({
+        name,
+        description,
+        address,
+        source,
+        affiliation,
+        geodata,
+      });
+
+      if (tagIds && tagIds.length > 0) {
+        company.tags = await this.tagRepository.findByIds(tagIds);
+      }
+
+      if (categoryIds && categoryIds.length > 0) {
+        company.categories =
+          await this.categoryRepository.findByIds(categoryIds);
+      }
+
+      return await this.companyRepository.save(company);
+    } else {
+      throw new Error('Geodata not found for the provided address');
     }
-
-    if (categoryIds && categoryIds.length > 0) {
-      company.categories = await this.categoryRepository.findByIds(categoryIds);
-    }
-
-    return await this.companyRepository.save(company);
   }
 
   async addCompanyMetadatum(
@@ -74,12 +91,16 @@ export class CompanyService {
   }
 
   async getCompanyWithRelations(companyId: number): Promise<Company> {
-    return await this.companyRepository.findOne({
-      where: {
-        id: companyId,
-      },
-      relations: ['tags', 'companymetadatums', 'categories', 'users'],
-    });
+    try {
+      return await this.companyRepository.findOne({
+        where: {
+          id: companyId,
+        },
+        relations: ['tags', 'companymetadatums', 'categories', 'users'],
+      });
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async addUserToCompany(userId: number, companyId: number): Promise<Company> {
@@ -100,7 +121,11 @@ export class CompanyService {
 
     company.users.push(user);
 
-    return await this.companyRepository.save(company);
+    try {
+      return await this.companyRepository.save(company);
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async removeUserFromCompany(

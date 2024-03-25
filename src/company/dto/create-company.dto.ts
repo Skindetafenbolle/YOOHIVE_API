@@ -11,9 +11,6 @@ export class CreateCompanyDto {
   address: string;
 
   @IsOptional()
-  geodata: object;
-
-  @IsOptional()
   source: string;
 
   @IsOptional()

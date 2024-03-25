@@ -1,10 +1,10 @@
 import {
-  Column,
-  CreateDateColumn,
   Entity,
+  PrimaryGeneratedColumn,
+  Column,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
@@ -24,19 +24,24 @@ export class Service {
   currency: string;
 
   @Column()
-  duration_minutes: string;
+  duration_minutes: number;
+
+  @Column({ default: true })
+  isMain: boolean;
 
   @Column()
   description: string;
 
-  @ManyToOne(() => Service, (service) => service.sub_service)
-  parent: Service;
-
-  @OneToMany(() => Service, (service) => service.parent)
-  sub_service: Service[];
-
   @ManyToOne(() => Company, (company) => company.services)
   companies: Company;
+
+  @ManyToOne(() => Service, (service) => service.subServices, {
+    nullable: true,
+  })
+  parent: Service;
+
+  @OneToMany(() => Service, (subService) => subService.parent)
+  subServices: Service[];
 
   @CreateDateColumn()
   createdAt: Date;
