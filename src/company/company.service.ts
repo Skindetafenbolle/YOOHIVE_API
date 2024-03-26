@@ -193,7 +193,7 @@ export class CompanyService {
 
       let company = await this.companyRepository.findOne({
         where: { name },
-        relations: ['categories'],
+        relations: ['categories', 'companymetadatums', 'services'],
       });
 
       if (!company) {
@@ -227,46 +227,56 @@ export class CompanyService {
 
       const savedCompany = await this.companyRepository.save(company);
 
-      await this.serviceService.createServices(savedCompany, servicesData);
+      // Сохранение метаданных только если они отсутствуют у компании
+      const metadataTypes = [
+        'schedule',
+        'phones',
+        'email',
+        'socialMediaLinks',
+        'images',
+      ];
+      for (const metadataType of metadataTypes) {
+        let metadataValue;
+        switch (metadataType) {
+          case 'schedule':
+            metadataValue = schedule;
+            break;
+          case 'phones':
+            metadataValue = phones;
+            break;
+          case 'email':
+            metadataValue = email;
+            break;
+          case 'socialMediaLinks':
+            metadataValue = socialMediaLinks;
+            break;
+          case 'images':
+            metadataValue = exampleWorks;
+            break;
+          default:
+            metadataValue = null;
+        }
 
-      if (schedule) {
-        await this.companyMetadataService.saveCompanyMetadata({
-          type: 'schedule',
-          value: schedule,
-          company: savedCompany,
-        });
+        if (metadataValue !== null) {
+          const existingMetadata = company.companymetadatums.some(
+            (metadata) => metadata.type === metadataType,
+          );
+          if (!existingMetadata) {
+            await this.companyMetadataService.saveCompanyMetadata({
+              type: metadataType,
+              value: metadataValue,
+              company: savedCompany,
+            });
+          }
+        }
       }
 
-      if (phones && phones.length > 0) {
-        await this.companyMetadataService.saveCompanyMetadata({
-          type: 'phones',
-          value: phones,
-          company: savedCompany,
-        });
-      }
-
-      if (email && email.length > 0) {
-        await this.companyMetadataService.saveCompanyMetadata({
-          type: 'email',
-          value: email,
-          company: savedCompany,
-        });
-      }
-
-      if (socialMediaLinks && socialMediaLinks.length > 0) {
-        await this.companyMetadataService.saveCompanyMetadata({
-          type: 'socialMediaLinks',
-          value: socialMediaLinks,
-          company: savedCompany,
-        });
-      }
-
-      if (exampleWorks && exampleWorks.length > 0) {
-        await this.companyMetadataService.saveCompanyMetadata({
-          type: 'images',
-          value: exampleWorks,
-          company: savedCompany,
-        });
+      const existingServiceIds = company.services.map((service) => service.id);
+      const newServices = servicesData.filter(
+        (service) => !existingServiceIds.includes(service.id),
+      );
+      if (newServices.length > 0) {
+        await this.serviceService.createServices(savedCompany, newServices);
       }
 
       companies.push(savedCompany);
