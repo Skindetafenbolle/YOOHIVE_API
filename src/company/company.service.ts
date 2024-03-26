@@ -188,6 +188,7 @@ export class CompanyService {
         phones,
         socialMediaLinks,
         exampleWorks,
+        email,
       } = companyData;
 
       let company = await this.companyRepository.findOne({
@@ -240,6 +241,14 @@ export class CompanyService {
         await this.companyMetadataService.saveCompanyMetadata({
           type: 'phones',
           value: phones,
+          company: savedCompany,
+        });
+      }
+
+      if (email && email.length > 0) {
+        await this.companyMetadataService.saveCompanyMetadata({
+          type: 'email',
+          value: email,
           company: savedCompany,
         });
       }

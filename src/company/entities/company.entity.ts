@@ -22,7 +22,7 @@ export class Company {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
   @Column()
@@ -31,7 +31,7 @@ export class Company {
   @Column({ type: 'json' })
   geodata: object;
 
-  @Column()
+  @Column({ nullable: true })
   source: string;
 
   @Column({ nullable: true })

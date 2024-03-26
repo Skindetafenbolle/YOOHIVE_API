@@ -34,6 +34,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         ssl: {
           rejectUnauthorized: false,
         },
+
         entities: [__dirname + '/**/*.entity{.js, .ts}'],
       }),
 
