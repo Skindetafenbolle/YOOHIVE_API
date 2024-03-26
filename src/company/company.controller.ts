@@ -84,7 +84,7 @@ export class CompanyController {
     @Body() data: any,
     @Param('source') source: string,
     @Param('category') category: string,
-  ): Promise<Company> {
+  ): Promise<Company[]> {
     return await this.companyService.createCompanyFromParser(
       data,
       source,

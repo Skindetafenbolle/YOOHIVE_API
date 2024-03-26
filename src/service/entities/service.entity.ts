@@ -17,13 +17,13 @@ export class Service {
   @Column()
   name: string;
 
-  @Column()
-  price: number;
+  @Column({ nullable: true })
+  price: string;
 
-  @Column()
+  @Column({ nullable: true })
   currency: string;
 
-  @Column()
+  @Column({ nullable: true })
   duration_minutes: number;
 
   @Column({ default: true })

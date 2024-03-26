@@ -60,7 +60,13 @@ export class CompanyService {
         where: {
           id: companyId,
         },
-        relations: ['tags', 'companymetadatums', 'categories', 'users'],
+        relations: [
+          'tags',
+          'companymetadatums',
+          'categories',
+          'users',
+          'services',
+        ],
       });
     } catch (e) {
       throw new Error(e.message);
@@ -153,10 +159,11 @@ export class CompanyService {
     data: any,
     source: string,
     category: string,
-  ): Promise<Company> {
+  ): Promise<Company[]> {
     const existingCategory =
       await this.categoryService.getCategoryByName(category);
     let categoryObject: Category;
+
     if (existingCategory) {
       categoryObject = existingCategory;
     } else {
@@ -165,75 +172,98 @@ export class CompanyService {
         category,
       );
     }
-    const {
-      name,
-      description,
-      address,
-      affiliation,
-      specialTags,
-      schedule,
-      phones,
-      socialMediaLinks,
-      exampleWorks,
-      languages,
-      servicesData,
-    } = data;
 
-    const geoData = await this.getGeoData(address);
+    const companies: Company[] = [];
 
-    const company = await this.createCompany(
-      name,
-      description,
-      address,
-      source,
-      affiliation,
-      geoData,
-    );
-    company.categories = [categoryObject];
-    const tags = await this.tagService.saveTags(specialTags);
-    const languagesArray = await this.tagService.saveLanguages(languages);
+    for (const companyData of data) {
+      const {
+        name,
+        description,
+        address,
+        affiliation,
+        specialTags,
+        languages,
+        servicesData,
+        schedule,
+        phones,
+        socialMediaLinks,
+        exampleWorks,
+      } = companyData;
 
-    if (!company.tags) {
-      company.tags = [];
-    }
-
-    company.tags = [...company.tags, ...tags, ...languagesArray];
-    const savedCompany = await this.companyRepository.save(company);
-    await this.serviceService.createServices(savedCompany, servicesData);
-
-    if (schedule && schedule.length > 0) {
-      await this.companyMetadataService.saveCompanyMetadata({
-        type: 'schedule',
-        value: schedule,
-        company: savedCompany,
+      let company = await this.companyRepository.findOne({
+        where: { name },
+        relations: ['categories'],
       });
+
+      if (!company) {
+        const geoData = await this.getGeoData(address);
+        company = await this.createCompany(
+          name,
+          description,
+          address,
+          source,
+          affiliation,
+          geoData,
+        );
+        company.categories = [categoryObject];
+        companies.push(company);
+      } else {
+        const categoryExists = company.categories.some(
+          (cat) => cat.id === categoryObject.id,
+        );
+
+        if (!categoryExists) {
+          company.categories.push(categoryObject);
+        }
+      }
+
+      const tags = await this.tagService.saveTags(specialTags);
+      const languagesArray = await this.tagService.saveLanguages(languages);
+      if (!company.tags) {
+        company.tags = [];
+      }
+      company.tags = [...company.tags, ...tags, ...languagesArray];
+
+      const savedCompany = await this.companyRepository.save(company);
+
+      await this.serviceService.createServices(savedCompany, servicesData);
+
+      if (schedule) {
+        await this.companyMetadataService.saveCompanyMetadata({
+          type: 'schedule',
+          value: schedule,
+          company: savedCompany,
+        });
+      }
+
+      if (phones && phones.length > 0) {
+        await this.companyMetadataService.saveCompanyMetadata({
+          type: 'phones',
+          value: phones,
+          company: savedCompany,
+        });
+      }
+
+      if (socialMediaLinks && socialMediaLinks.length > 0) {
+        await this.companyMetadataService.saveCompanyMetadata({
+          type: 'socialMediaLinks',
+          value: socialMediaLinks,
+          company: savedCompany,
+        });
+      }
+
+      if (exampleWorks && exampleWorks.length > 0) {
+        await this.companyMetadataService.saveCompanyMetadata({
+          type: 'images',
+          value: exampleWorks,
+          company: savedCompany,
+        });
+      }
+
+      companies.push(savedCompany);
     }
 
-    if (phones && phones.length > 0) {
-      await this.companyMetadataService.saveCompanyMetadata({
-        type: 'phones',
-        value: phones,
-        company: savedCompany,
-      });
-    }
-
-    if (socialMediaLinks && socialMediaLinks.length > 0) {
-      await this.companyMetadataService.saveCompanyMetadata({
-        type: 'socialMediaLinks',
-        value: socialMediaLinks,
-        company: savedCompany,
-      });
-    }
-
-    if (exampleWorks && exampleWorks.length > 0) {
-      await this.companyMetadataService.saveCompanyMetadata({
-        type: 'images',
-        value: exampleWorks,
-        company: savedCompany,
-      });
-    }
-
-    return savedCompany;
+    return companies;
   }
 
   private async createCompany(

@@ -19,15 +19,18 @@ export class ServiceService {
 
     for (const serviceData of servicesData) {
       const service = new Service();
-      service.name = serviceData.name;
-      service.price = serviceData.price.value;
-      service.currency = serviceData.price.currency;
-      service.duration_minutes = serviceData.duration_minutes;
-      service.description = serviceData.description;
-      service.companies = company; // Установка связи с компанией
+      service.name = serviceData.name || '';
+      service.currency = serviceData.price?.currency || '';
+      service.duration_minutes = serviceData.duration_minutes || 0;
+      service.description = serviceData.description || '';
+      // service.price = serviceData.price.value || '';
+      service.companies = company;
 
-      console.log('Service before save:', service); // Отладочный вывод
-
+      if (serviceData.price && serviceData.price.value !== null) {
+        service.price = serviceData.price.value;
+      } else {
+        service.price = '';
+      }
       if (serviceData.subServices && serviceData.subServices.length > 0) {
         service.subServices = await this.createServices(
           company,
@@ -38,12 +41,6 @@ export class ServiceService {
       services.push(service);
     }
 
-    console.log('Services before save:', services);
-
-    const savedServices = await this.serviceRepository.save(services);
-
-    console.log('Saved services:', savedServices); // Отладочный вывод
-
-    return savedServices;
+    return await this.serviceRepository.save(services);
   }
 }

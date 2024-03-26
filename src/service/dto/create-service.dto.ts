@@ -13,7 +13,7 @@ export class CreateServiceDto {
 
   @IsNotEmpty()
   @IsNumber()
-  price: number;
+  price: string;
 
   @IsNotEmpty()
   @IsString()
