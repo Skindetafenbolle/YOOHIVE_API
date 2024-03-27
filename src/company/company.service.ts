@@ -263,16 +263,11 @@ export class CompanyService {
         }
 
         const tags = await this.tagService.saveTags(specialTags);
-        console.log('tags: ' + tags);
         const languagesArray = await this.tagService.saveLanguages(languages);
-        console.log('languagesArray: ' + languagesArray);
-        console.log('Company tags: ' + company.tags);
         if (!company.tags) {
           company.tags = [];
-          console.log('tags empty');
         }
         company.tags = [...company.tags, ...tags, ...languagesArray];
-        console.log('Company tags: ' + company.tags);
         companies.push(savedCompany);
         await this.companyRepository.save(company);
       }
