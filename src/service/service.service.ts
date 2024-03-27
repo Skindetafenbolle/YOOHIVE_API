@@ -23,7 +23,6 @@ export class ServiceService {
       service.currency = serviceData.price?.currency || '';
       service.duration_minutes = serviceData.duration_minutes || 0;
       service.description = serviceData.description || '';
-      // service.price = serviceData.price.value || '';
       service.companies = company;
 
       if (serviceData.price && serviceData.price.value !== null) {

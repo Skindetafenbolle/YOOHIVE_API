@@ -183,7 +183,7 @@ export class CompanyService {
         affiliation,
         specialTags,
         languages,
-        servicesData,
+        services,
         schedule,
         phones,
         socialMediaLinks,
@@ -221,7 +221,7 @@ export class CompanyService {
       if (company.companymetadatums === undefined) {
         const savedCompany = await this.companyRepository.save(company);
 
-        await this.serviceService.createServices(savedCompany, servicesData);
+        await this.serviceService.createServices(savedCompany, services);
         if (schedule) {
           await this.companyMetadataService.saveCompanyMetadata({
             type: 'schedule',
@@ -277,7 +277,7 @@ export class CompanyService {
         await this.companyRepository.save(company);
       }
       if (company.companymetadatums !== null) {
-        console.log('fshjskdfsgdfk');
+        console.log('Обновлена только категория');
       }
     }
 
