@@ -1,22 +1,16 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('company')
+@ApiTags('company')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
-
+  //
   // @Post()
-  // async createCompany(@Body() body: any): Promise<Company> {
+  // async createCompany(@Body() createCompanyDto: createCompanyDto): Promise<Company> {
   //   const {
   //     name,
   //     description,

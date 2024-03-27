@@ -2,8 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Category } from './entities/category.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ApiTags } from '@nestjs/swagger';
 
 @Injectable()
+@ApiTags('categories')
 export class CategoryService {
   constructor(
     @InjectRepository(Category)
