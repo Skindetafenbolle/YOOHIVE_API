@@ -11,6 +11,7 @@ import { CompanyMetadataService } from '../company-metadata/company-metadata.ser
 import { CategoryService } from '../category/category.service';
 import { Service } from '../service/entities/service.entity';
 import { ServiceService } from '../service/service.service';
+import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 
 @Injectable()
 export class CompanyService {
@@ -33,6 +34,17 @@ export class CompanyService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async getAllCompanies(
+    options: PaginationOptionsInterface,
+  ): Promise<Company[]> {
+    const skip = (options.page - 1) * options.perPage;
+
+    return await this.companyRepository.find({
+      take: options.perPage,
+      skip: skip,
+      // relations: ['categories', 'companymetadatums', 'services'],
+    });
+  }
   async addCompanyMetadatum(
     companyId: number,
     type: string,
@@ -149,10 +161,6 @@ export class CompanyService {
     } catch (error) {
       throw new Error('Error delete company');
     }
-  }
-
-  async getAllCompanies(): Promise<Company[]> {
-    return await this.companyRepository.find();
   }
 
   async createCompanyFromParser(
