@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { Tag } from '../tag/entities/tag.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { Category } from '../category/entities/category.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
 import { User } from '../user/entities/user.entity';
@@ -42,7 +42,14 @@ export class CompanyService {
     return await this.companyRepository.find({
       take: options.perPage,
       skip: skip,
-      // relations: ['categories', 'companymetadatums', 'services'],
+      relations: [
+        'tags',
+        'companymetadatums',
+        'categories',
+        'users',
+        'services',
+        'services.parent.id',
+      ],
     });
   }
   async addCompanyMetadatum(
@@ -66,11 +73,31 @@ export class CompanyService {
     return await this.companyMetadatumRepository.save(metadata);
   }
 
-  async getCompanyWithRelations(companyId: number): Promise<Company> {
+  async getCompanyById(companyId: number): Promise<Company> {
     try {
       return await this.companyRepository.findOne({
         where: {
           id: companyId,
+        },
+        relations: [
+          'tags',
+          'companymetadatums',
+          'categories',
+          'users',
+          'services',
+          'services.parent.id',
+        ],
+      });
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  }
+
+  async findCompanyByName(name: string): Promise<Company> {
+    try {
+      return await this.companyRepository.findOne({
+        where: {
+          name: Like(`%${name}%`),
         },
         relations: [
           'tags',

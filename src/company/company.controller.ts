@@ -32,11 +32,14 @@ export class CompanyController {
     return await this.companyService.getAllCompanies(options);
   }
 
-  @Get(':id')
-  async getCompanyWithRelations(
-    @Param('id') companyId: number,
-  ): Promise<Company> {
-    return this.companyService.getCompanyWithRelations(companyId);
+  @Get('id/:id')
+  async getCompanyById(@Param('id') companyId: number): Promise<Company> {
+    return this.companyService.getCompanyById(companyId);
+  }
+
+  @Get('/name/:name')
+  async getCompanyByName(@Param('name') name: string): Promise<Company> {
+    return this.companyService.findCompanyByName(name);
   }
 
   @Post(':companyId/users/:userId')
