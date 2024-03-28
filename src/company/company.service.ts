@@ -48,7 +48,7 @@ export class CompanyService {
         'categories',
         'users',
         'services',
-        'services.parent.id',
+        'services.parent',
       ],
     });
   }
@@ -85,7 +85,7 @@ export class CompanyService {
           'categories',
           'users',
           'services',
-          'services.parent.id',
+          'services.parent',
         ],
       });
     } catch (e) {
