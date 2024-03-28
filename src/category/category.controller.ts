@@ -10,7 +10,7 @@ import {
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('category')
 @ApiTags('categories')
@@ -18,6 +18,13 @@ export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @ApiBody({ type: CreateCategoryDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Category created successfully',
+    type: CreateCategoryDto,
+  })
+  @ApiResponse({ status: 404, description: 'Category not found' })
   async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {
@@ -26,6 +33,8 @@ export class CategoryController {
   }
 
   @Delete(':id')
+  @ApiParam({ name: 'id', description: 'The ID of the category to delete' })
+  @ApiResponse({ status: 200, description: 'Category deleted successfully' })
   async removeCategory(@Param('id') id: number) {
     try {
       const deletedCategory = await this.categoryService.removeCategory(id);
@@ -39,11 +48,25 @@ export class CategoryController {
   }
 
   @Get('/all')
+  @ApiResponse({
+    status: 200,
+    description: 'All categories retrieved successfully',
+    type: [CreateCategoryDto],
+  })
   async getAllCategories(): Promise<Category[]> {
     return await this.categoryService.getAllCategories();
   }
 
   @Get(':slug')
+  @ApiParam({
+    name: 'slug',
+    description: 'The slug of the category to retrieve',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Category retrieved successfully',
+    type: [CreateCategoryDto],
+  })
   async getCategoryBySlug(@Param('slug') slug: string): Promise<Category[]> {
     return await this.categoryService.getCategoriesBySlug(slug);
   }

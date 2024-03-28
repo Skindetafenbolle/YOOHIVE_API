@@ -33,14 +33,6 @@ export class CategoryService {
     return await this.categoryRepository.find();
   }
 
-  // async getCategoryBySlug(slug: string): Promise<Category> {
-  //   const category = await this.categoryRepository.findOne({ where: { slug } });
-  //   if (!category) {
-  //     throw new NotFoundException('Category not found');
-  //   }
-  //   return category;
-  // }
-
   async getCategoriesBySlug(slug: string): Promise<Category[]> {
     const categories = await this.categoryRepository.find({ where: { slug } });
     if (categories.length === 0) {

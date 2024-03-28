@@ -13,6 +13,5 @@ export class CreateUserDto {
   @ApiProperty()
   phone: string;
 
-  @ApiProperty()
   role: string;
 }
