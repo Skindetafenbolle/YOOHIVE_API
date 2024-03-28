@@ -78,6 +78,7 @@ export class CompanyService {
           'categories',
           'users',
           'services',
+          'services.parent',
         ],
       });
     } catch (e) {
@@ -197,6 +198,7 @@ export class CompanyService {
         socialMediaLinks,
         exampleWorks,
         email,
+        googleSchedule,
       } = companyData;
 
       let company = await this.companyRepository.findOne({
@@ -266,6 +268,14 @@ export class CompanyService {
           await this.companyMetadataService.saveCompanyMetadata({
             type: 'images',
             value: exampleWorks,
+            company: savedCompany,
+          });
+        }
+
+        if (googleSchedule && googleSchedule.length > 0) {
+          await this.companyMetadataService.saveCompanyMetadata({
+            type: 'googleSchedule',
+            value: googleSchedule,
             company: savedCompany,
           });
         }

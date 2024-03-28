@@ -9,28 +9,6 @@ import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 @ApiTags('company')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
-  //
-  // @Post()
-  // async createCompany(@Body() createCompanyDto: createCompanyDto): Promise<Company> {
-  //   const {
-  //     name,
-  //     description,
-  //     address,
-  //     source,
-  //     affiliation,
-  //     tagIds,
-  //     categoryIds,
-  //   } = body;
-  //   return this.companyService.createCompany(
-  //     name,
-  //     description,
-  //     address,
-  //     source,
-  //     affiliation,
-  //     tagIds,
-  //     categoryIds,
-  //   );
-  // }
 
   @Post(':id/metadatum')
   async addCompanyMetadatum(
