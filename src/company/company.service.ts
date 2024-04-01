@@ -44,18 +44,21 @@ export class CompanyService {
     const companies = await this.companyRepository.find({
       take: options.perPage,
       skip: skip,
-      relations: [
-        'tags',
-        'companymetadatums',
-        'categories',
-        'users',
-        'services',
-        'services.parent',
-      ],
+      relations: ['tags', 'companymetadatums', 'categories'],
     });
+
+    await Promise.all(
+      companies.map(async (company) => {
+        company.services = await this.serviceRepository.find({
+          where: { companies: { id: company.id } },
+          take: 3,
+        });
+      }),
+    );
 
     return { companies, totalCount };
   }
+
   async addCompanyMetadatum(
     companyId: number,
     type: string,
