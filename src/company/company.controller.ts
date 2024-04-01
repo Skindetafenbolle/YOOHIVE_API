@@ -35,7 +35,7 @@ export class CompanyController {
   async getAllCompany(
     @Param('page') page: number = 1,
     @Param('perPage') perPage: number = 10,
-  ): Promise<Company[]> {
+  ): Promise<{ companies: Company[]; totalCount: number }> {
     const options: PaginationOptionsInterface = {
       page: page,
       perPage: perPage,

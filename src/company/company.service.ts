@@ -36,10 +36,12 @@ export class CompanyService {
 
   async getAllCompanies(
     options: PaginationOptionsInterface,
-  ): Promise<Company[]> {
+  ): Promise<{ companies: Company[]; totalCount: number }> {
     const skip = (options.page - 1) * options.perPage;
 
-    return await this.companyRepository.find({
+    const totalCount = await this.companyRepository.count();
+
+    const companies = await this.companyRepository.find({
       take: options.perPage,
       skip: skip,
       relations: [
@@ -51,6 +53,8 @@ export class CompanyService {
         'services.parent',
       ],
     });
+
+    return { companies, totalCount };
   }
   async addCompanyMetadatum(
     companyId: number,
@@ -95,7 +99,7 @@ export class CompanyService {
 
   async findCompanyByName(name: string): Promise<Company> {
     try {
-      return await this.companyRepository.findOne({
+      const company = await this.companyRepository.findOne({
         where: {
           name: Like(`%${name}%`),
         },
@@ -108,6 +112,12 @@ export class CompanyService {
           'services.parent',
         ],
       });
+
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
+      return company;
     } catch (e) {
       throw new Error(e.message);
     }
