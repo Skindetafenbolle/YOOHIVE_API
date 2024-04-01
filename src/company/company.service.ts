@@ -49,6 +49,14 @@ export class CompanyService {
 
     await Promise.all(
       companies.map(async (company) => {
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+      }),
+    );
+
+    await Promise.all(
+      companies.map(async (company) => {
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
@@ -75,6 +83,7 @@ export class CompanyService {
 
     const query = this.companyRepository.createQueryBuilder('company');
     query.leftJoinAndSelect('company.categories', 'category');
+    query.leftJoinAndSelect('company.companymetadatums', 'metadata');
     query.where('category.id = :categoryId', { categoryId: category.id });
     query.take(options.perPage);
     query.skip(skip);
@@ -88,6 +97,10 @@ export class CompanyService {
           where: { companies: { id: company.id } },
           take: 3,
         });
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+        return company;
       }),
     );
 
