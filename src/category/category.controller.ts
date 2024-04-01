@@ -56,18 +56,4 @@ export class CategoryController {
   async getAllCategories(): Promise<Category[]> {
     return await this.categoryService.getAllCategories();
   }
-
-  @Get(':slug')
-  @ApiParam({
-    name: 'slug',
-    description: 'The slug of the category to retrieve',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Category retrieved successfully',
-    type: [CreateCategoryDto],
-  })
-  async getCategoryBySlug(@Param('slug') slug: string): Promise<Category[]> {
-    return await this.categoryService.getCategoriesBySlug(slug);
-  }
 }

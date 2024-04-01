@@ -59,6 +59,41 @@ export class CompanyService {
     return { companies, totalCount };
   }
 
+  async getCompaniesByCategory(
+    categoryName: string,
+    options: PaginationOptionsInterface,
+  ): Promise<{ companies: Company[]; totalCount: number }> {
+    const skip = (options.page - 1) * options.perPage;
+
+    const category = await this.categoryRepository.findOne({
+      where: { name: categoryName },
+    });
+
+    if (!category) {
+      return { companies: [], totalCount: 0 };
+    }
+
+    const query = this.companyRepository.createQueryBuilder('company');
+    query.leftJoinAndSelect('company.categories', 'category');
+    query.where('category.id = :categoryId', { categoryId: category.id });
+    query.take(options.perPage);
+    query.skip(skip);
+
+    const totalCount = await query.getCount();
+    const companies = await query.getMany();
+
+    await Promise.all(
+      companies.map(async (company) => {
+        company.services = await this.serviceRepository.find({
+          where: { companies: { id: company.id } },
+          take: 3,
+        });
+      }),
+    );
+
+    return { companies, totalCount };
+  }
+
   async addCompanyMetadatum(
     companyId: number,
     type: string,

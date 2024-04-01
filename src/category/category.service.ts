@@ -33,28 +33,6 @@ export class CategoryService {
     return await this.categoryRepository.find();
   }
 
-  async getCategoriesBySlug(slug: string): Promise<Category[]> {
-    const categories = await this.categoryRepository
-      .createQueryBuilder('category')
-      .leftJoinAndSelect('category.companies', 'company')
-      .leftJoinAndSelect('company.services', 'service')
-      .where('category.slug = :slug', { slug })
-      .getMany();
-
-    if (categories.length === 0) {
-      throw new NotFoundException('No categories found with the provided slug');
-    }
-
-    // Ограничиваем количество услуг до трех для каждой компании
-    categories.forEach((category) => {
-      category.companies.forEach((company) => {
-        company.services = company.services.slice(0, 3);
-      });
-    });
-
-    return categories;
-  }
-
   async getCategoryByName(name: string): Promise<Category> {
     return await this.categoryRepository.findOne({ where: { name } });
   }

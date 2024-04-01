@@ -32,6 +32,17 @@ export class CompanyController {
   }
 
   @Get('/getAll/:page/:perPage')
+  @ApiParam({ name: 'page', description: 'The page number', required: false })
+  @ApiParam({
+    name: 'perPage',
+    description: 'The number of items per page',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all companies with pagination',
+    type: [CreateCompanyDto],
+  })
   async getAllCompany(
     @Param('page') page: number = 1,
     @Param('perPage') perPage: number = 10,
@@ -41,6 +52,30 @@ export class CompanyController {
       perPage: perPage,
     };
     return await this.companyService.getAllCompanies(options);
+  }
+
+  @Get('/category/:categoryName/:page/:perPage')
+  @ApiParam({ name: 'categoryName', description: 'The name of the category' })
+  @ApiParam({ name: 'page', description: 'The page number', required: false })
+  @ApiParam({
+    name: 'perPage',
+    description: 'The number of items per page',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of companies by category with pagination',
+    type: [CreateCompanyDto],
+  })
+  async getCompaniesByCategory(
+    @Param('categoryName') categoryName: string,
+    @Param('page') page: number,
+    @Param('perPage') perPage: number,
+  ) {
+    return await this.companyService.getCompaniesByCategory(categoryName, {
+      page,
+      perPage,
+    });
   }
 
   @Get('id/:id')
