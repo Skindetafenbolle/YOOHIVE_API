@@ -19,7 +19,6 @@ export class CompanyService {
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
     @InjectRepository(Tag)
-    private readonly tagRepository: Repository<Tag>,
     private readonly tagService: TagService,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
@@ -196,7 +195,6 @@ export class CompanyService {
         relations: ['tags', 'companymetadatums', 'categories'],
       });
 
-      // Выборка только изображений из метаданных для каждой компании
       await Promise.all(
         companies.map(async (company) => {
           company.companymetadatums = company.companymetadatums.filter(
@@ -205,7 +203,6 @@ export class CompanyService {
         }),
       );
 
-      // Загрузка только 3-х услуг для каждой компании
       await Promise.all(
         companies.map(async (company) => {
           company.services = await this.serviceRepository.find({
