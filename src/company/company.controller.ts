@@ -89,15 +89,21 @@ export class CompanyController {
     return this.companyService.getCompanyById(companyId);
   }
 
-  @Get('/name/:name')
+  @Get('/name/:name/:page/:perPage')
   @ApiParam({ name: 'name', description: 'The name of the company' })
+  @ApiParam({ name: 'page', description: 'Page number' })
+  @ApiParam({ name: 'perPage', description: 'Items per page' })
   @ApiResponse({
     status: 200,
-    description: 'Company found',
+    description: 'Companies found',
     type: CreateCompanyDto,
   })
-  async getCompanyByName(@Param('name') name: string): Promise<Company> {
-    return this.companyService.findCompanyByName(name);
+  async getCompaniesByName(
+    @Param('name') name: string,
+    @Param('page') page: number,
+    @Param('perPage') perPage: number,
+  ): Promise<{ companies: Company[]; totalCount: number }> {
+    return this.companyService.findCompaniesByName(name, { page, perPage });
   }
 
   @Post(':companyId/users/:userId')

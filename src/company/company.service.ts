@@ -148,27 +148,48 @@ export class CompanyService {
     }
   }
 
-  async findCompanyByName(name: string): Promise<Company> {
+  async findCompaniesByName(
+    name: string,
+    options: PaginationOptionsInterface,
+  ): Promise<{ companies: Company[]; totalCount: number }> {
     try {
-      const company = await this.companyRepository.findOne({
+      const skip = (options.page - 1) * options.perPage;
+
+      const totalCount = await this.companyRepository.count({
         where: {
           name: Like(`%${name}%`),
         },
-        relations: [
-          'tags',
-          'companymetadatums',
-          'categories',
-          'users',
-          'services',
-          'services.parent',
-        ],
       });
 
-      if (!company) {
-        throw new Error('Company not found');
-      }
+      const companies = await this.companyRepository.find({
+        where: {
+          name: Like(`%${name}%`),
+        },
+        take: options.perPage,
+        skip: skip,
+        relations: ['tags', 'companymetadatums', 'categories'],
+      });
 
-      return company;
+      // Выборка только изображений из метаданных для каждой компании
+      await Promise.all(
+        companies.map(async (company) => {
+          company.companymetadatums = company.companymetadatums.filter(
+            (metadata) => metadata.type === 'images',
+          );
+        }),
+      );
+
+      // Загрузка только 3-х услуг для каждой компании
+      await Promise.all(
+        companies.map(async (company) => {
+          company.services = await this.serviceRepository.find({
+            where: { companies: { id: company.id } },
+            take: 3,
+          });
+        }),
+      );
+
+      return { companies, totalCount };
     } catch (e) {
       throw new Error(e.message);
     }
