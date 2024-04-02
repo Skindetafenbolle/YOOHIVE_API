@@ -23,6 +23,14 @@ export class CompanyController {
     description: 'The created metadatum',
     type: CreateCompanyMetadatumDto,
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
   async addCompanyMetadatum(
     @Param('id') companyId: number,
     @Body() body: CreateCompanyMetadatumDto,
@@ -42,6 +50,14 @@ export class CompanyController {
     status: 200,
     description: 'List of all companies with pagination',
     type: [CreateCompanyDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Companies not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
   })
   async getAllCompany(
     @Param('page') page: number = 1,
@@ -67,6 +83,14 @@ export class CompanyController {
     description: 'List of companies by category with pagination',
     type: [CreateCompanyDto],
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Companies with category not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
   async getCompaniesByCategory(
     @Param('categoryName') categoryName: string,
     @Param('page') page: number,
@@ -85,6 +109,14 @@ export class CompanyController {
     description: 'Company found',
     type: CreateCompanyDto,
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
   async getCompanyById(@Param('id') companyId: number): Promise<Company> {
     return this.companyService.getCompanyById(companyId);
   }
@@ -95,6 +127,14 @@ export class CompanyController {
     status: 200,
     description: 'Company found',
     type: CreateCompanyDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
   })
   async getCompanyByName(@Param('name') name: string): Promise<Company> {
     return this.companyService.findCompanyByName(name);
@@ -108,6 +148,14 @@ export class CompanyController {
     status: 200,
     description: 'Companies found',
     type: CreateCompanyDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Companies not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
   })
   async getCompaniesByName(
     @Param('name') name: string,
@@ -125,6 +173,14 @@ export class CompanyController {
     description: 'User added to company',
     type: CreateCompanyDto,
   })
+  @ApiResponse({
+    status: 404,
+    description: 'CompanyId or UserId not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
   async addUserToCompany(
     @Param('companyId') companyId: number,
     @Param('userId') userId: number,
@@ -139,6 +195,14 @@ export class CompanyController {
     description: 'Company removed',
     type: CreateCompanyDto,
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Company not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
   async removeCompany(@Param('id') id: number): Promise<Company> {
     return this.companyService.removeCompany(id);
   }
@@ -150,6 +214,14 @@ export class CompanyController {
     status: 200,
     description: 'User removed from company',
     type: CreateCompanyDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'CompanyId or userId not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
   })
   async removeUserFromCompany(
     @Param('companyId') companyId: number,
@@ -166,6 +238,14 @@ export class CompanyController {
     status: 201,
     description: 'Company created',
     type: [CreateCompanyDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Company create failed',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
   })
   async createCompanyFromParser(
     @Body() data: any,
