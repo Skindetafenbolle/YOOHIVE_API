@@ -128,6 +128,32 @@ export class CompanyService {
     return await this.companyMetadatumRepository.save(metadata);
   }
 
+  async findCompanyByName(name: string): Promise<Company> {
+    try {
+      const company = await this.companyRepository.findOne({
+        where: {
+          name: Like(`%${name}%`),
+        },
+        relations: [
+          'tags',
+          'companymetadatums',
+          'categories',
+          'users',
+          'services',
+          'services.parent',
+        ],
+      });
+
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
+      return company;
+    } catch (e) {
+      throw new Error(e.message);
+    }
+  }
+
   async getCompanyById(companyId: number): Promise<Company> {
     try {
       return await this.companyRepository.findOne({
