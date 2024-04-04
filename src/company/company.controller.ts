@@ -230,6 +230,28 @@ export class CompanyController {
     return this.companyService.removeUserFromCompany(companyId, userId);
   }
 
+  @Post('changeSub/:companyId/:variant')
+  @ApiParam({ name: 'companyId', description: 'The ID of the company' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    type: CreateCompanyDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Failed',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  async changeSub(
+    @Param('companyId') companyId: number,
+    @Param('variant') variant: string,
+  ): Promise<Company> {
+    return this.companyService.changeSub(companyId, variant);
+  }
+
   @Post('/createCompany/:source/:category')
   @ApiBody({ description: 'Company data', type: CreateCompanyDto })
   @ApiParam({ name: 'source', description: 'The source of the company' })

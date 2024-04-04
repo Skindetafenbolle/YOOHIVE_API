@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './entities/company.entity';
 import { Tag } from '../tag/entities/tag.entity';
@@ -143,8 +143,31 @@ export class CompanyService {
         ],
       });
 
-      if (!company) {
-        throw new Error('Company not found');
+      if (company.subscription === 'None') {
+        company.geodata = null;
+        company.tags = null;
+        company.description = company.description.slice(0, 220);
+        const imageMetadata = company.companymetadatums.find(
+          (metadata: CompanyMetadatum) => metadata.type === 'images',
+        );
+
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata: CompanyMetadatum) => metadata.type !== 'socialMediaLinks',
+        );
+
+        if (
+          imageMetadata &&
+          imageMetadata.value &&
+        // @ts-ignore
+          imageMetadata.value.length > 0
+        ) {
+          const firstImage = imageMetadata.value[0];
+          company.companymetadatums.forEach((metadata: CompanyMetadatum) => {
+            if (metadata.type === 'images') {
+              metadata.value = [firstImage];
+            }
+          });
+        }
       }
 
       return company;
@@ -216,6 +239,20 @@ export class CompanyService {
     } catch (e) {
       throw new Error(e.message);
     }
+  }
+
+  async changeSub(companyId: number, variant: string): Promise<Company> {
+    const company = await this.companyRepository.findOne({
+      where: {
+        id: companyId,
+      },
+    });
+    if (!company) {
+      throw new NotFoundException('Not found company');
+    }
+    company.subscription = variant;
+    await this.companyRepository.save(company);
+    return company;
   }
 
   async addUserToCompany(userId: number, companyId: number): Promise<Company> {
