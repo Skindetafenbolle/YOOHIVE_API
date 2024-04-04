@@ -126,6 +126,14 @@ export class CompanyService {
             });
           }
         }
+        company.services = await this.serviceRepository.find({
+          where: { companies: { id: company.id } },
+          take: 3,
+        });
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+
         return company;
       }),
     );
