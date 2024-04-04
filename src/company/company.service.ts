@@ -143,8 +143,6 @@ export class CompanyService {
         ],
       });
 
-      console.log(company.tags);
-
       if (company.subscription === 'None') {
         company.geodata = null;
         if (company.description != null) {
@@ -159,8 +157,6 @@ export class CompanyService {
         );
 
         company.tags = company.tags.filter((tag: Tag) => tag.name === 'poland');
-
-        console.log(company.companymetadatums);
 
         if (
           imageMetadata &&
