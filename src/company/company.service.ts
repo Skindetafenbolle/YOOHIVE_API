@@ -143,10 +143,13 @@ export class CompanyService {
         ],
       });
 
+      console.log(company.tags);
+
       if (company.subscription === 'None') {
         company.geodata = null;
-        company.tags = null;
-        company.description = company.description.slice(0, 220);
+        if (company.description != null) {
+          company.description = company.description.slice(0, 220);
+        }
         const imageMetadata = company.companymetadatums.find(
           (metadata: CompanyMetadatum) => metadata.type === 'images',
         );
@@ -155,10 +158,15 @@ export class CompanyService {
           (metadata: CompanyMetadatum) => metadata.type !== 'socialMediaLinks',
         );
 
+        company.tags = company.tags.filter((tag: Tag) => tag.name === 'poland');
+
+        console.log(company.companymetadatums);
+
         if (
           imageMetadata &&
           imageMetadata.value &&
-        // @ts-ignore
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
           imageMetadata.value.length > 0
         ) {
           const firstImage = imageMetadata.value[0];
