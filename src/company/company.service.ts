@@ -40,26 +40,56 @@ export class CompanyService {
 
     const totalCount = await this.companyRepository.count();
 
-    const companies = await this.companyRepository.find({
+    let companies = await this.companyRepository.find({
       take: options.perPage,
       skip: skip,
       relations: ['tags', 'companymetadatums', 'categories'],
     });
 
-    await Promise.all(
+    companies = await Promise.all(
       companies.map(async (company) => {
-        company.companymetadatums = company.companymetadatums.filter(
-          (metadata) => metadata.type === 'images',
-        );
-      }),
-    );
+        if (company.subscription === 'None') {
+          company.geodata = null;
+          if (company.description != null) {
+            company.description = company.description.slice(0, 220);
+          }
+          const imageMetadata = company.companymetadatums.find(
+            (metadata: CompanyMetadatum) => metadata.type === 'images',
+          );
 
-    await Promise.all(
-      companies.map(async (company) => {
+          company.companymetadatums = company.companymetadatums.filter(
+            (metadata: CompanyMetadatum) =>
+              metadata.type !== 'socialMediaLinks',
+          );
+
+          company.tags = company.tags.filter(
+            (tag: Tag) => tag.name === 'poland',
+          );
+
+          if (
+            imageMetadata &&
+            imageMetadata.value &&
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            imageMetadata.value.length > 0
+          ) {
+            const firstImage = imageMetadata.value[0];
+            company.companymetadatums.forEach((metadata: CompanyMetadatum) => {
+              if (metadata.type === 'images') {
+                metadata.value = [firstImage];
+              }
+            });
+          }
+        }
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
         });
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+
+        return company;
       }),
     );
 
