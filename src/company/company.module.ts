@@ -30,5 +30,6 @@ import { Service } from '../service/entities/service.entity';
   ],
   controllers: [CompanyController],
   providers: [CompanyService],
+  exports: [CompanyService],
 })
 export class CompanyModule {}

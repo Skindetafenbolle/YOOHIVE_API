@@ -7,7 +7,6 @@ import { CategoryModule } from './category/category.module';
 import { CompanyMetadataModule } from './company-metadata/company-metadata.module';
 import { TagModule } from './tag/tag.module';
 import { ServiceModule } from './service/service.module';
-import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -20,7 +19,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     CompanyMetadataModule,
     TagModule,
     ServiceModule,
-    AuthModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -31,12 +29,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         synchronize: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        // ssl: {
+        //   rejectUnauthorized: false,
+        // },
         entities: [__dirname + '/**/*.entity{.js, .ts}'],
       }),
-
       inject: [ConfigService],
     }),
   ],

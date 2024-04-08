@@ -232,6 +232,7 @@ export class CompanyController {
 
   @Post('changeSub/:companyId/:variant')
   @ApiParam({ name: 'companyId', description: 'The ID of the company' })
+  @ApiParam({ name: 'variant', description: 'Variant of subs' })
   @ApiResponse({
     status: 200,
     description: 'Success',
