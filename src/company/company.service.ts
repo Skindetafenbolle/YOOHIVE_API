@@ -336,6 +336,26 @@ export class CompanyService {
     return company;
   }
 
+  async editCompany(
+    companyId: number,
+    data: Partial<Company>,
+  ): Promise<Company> {
+    const company = await this.companyRepository.findOne({
+      where: {
+        id: companyId,
+      },
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    Object.assign(company, data);
+
+    await this.companyRepository.save(company);
+
+    return company;
+  }
+
   async addUserToCompany(userId: number, companyId: number): Promise<Company> {
     const company = await this.companyRepository.findOne({
       where: {

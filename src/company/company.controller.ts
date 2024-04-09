@@ -230,6 +230,14 @@ export class CompanyController {
     return this.companyService.removeUserFromCompany(companyId, userId);
   }
 
+  @Post('edit/:companyId')
+  async editCompany(
+    @Param('companyId') companyId: number,
+    @Body() data: Partial<Company>,
+  ): Promise<Company> {
+    return this.companyService.editCompany(companyId, data);
+  }
+
   @Post('changeSub/:companyId/:variant')
   @ApiParam({ name: 'companyId', description: 'The ID of the company' })
   @ApiParam({ name: 'variant', description: 'Variant of subs' })
