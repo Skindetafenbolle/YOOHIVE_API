@@ -9,7 +9,6 @@ import { TagModule } from './tag/tag.module';
 import { ServiceModule } from './service/service.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 
@@ -33,9 +32,9 @@ import { JwtService } from '@nestjs/jwt';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         synchronize: true,
-        // ssl: {
-        //   rejectUnauthorized: false,
-        // },
+        ssl: {
+          rejectUnauthorized: false,
+        },
         entities: [__dirname + '/**/*.entity{.js, .ts}'],
       }),
       inject: [ConfigService],

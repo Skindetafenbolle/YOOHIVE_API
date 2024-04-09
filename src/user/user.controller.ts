@@ -23,11 +23,11 @@ export class UserController {
     private readonly userService: UserService,
   ) {}
 
-  // @Post('/registry')
-  // @UsePipes(new ValidationPipe())
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.userService.create(createUserDto);
-  // }
+  @Post('/registry')
+  @UsePipes(new ValidationPipe())
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
 
   @UseGuards(LocalAuthGuards)
   @Post('login')
