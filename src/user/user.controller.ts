@@ -32,7 +32,10 @@ export class UserController {
   @UseGuards(LocalAuthGuards)
   @Post('login')
   @ApiOperation({ summary: 'Login user' })
-  @ApiResponse({ status: 200, description: 'Returns access token upon successful login' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns access token upon successful login',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBearerAuth()
   @ApiBody({

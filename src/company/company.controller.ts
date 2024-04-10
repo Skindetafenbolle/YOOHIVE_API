@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
@@ -100,6 +108,61 @@ export class CompanyController {
       page,
       perPage,
     });
+  }
+
+  @Get('/search')
+  @ApiParam({ name: 'categoryName', description: 'Название категории' })
+  @ApiParam({ name: 'city', description: 'Название города' })
+  @ApiParam({
+    name: 'tags',
+    description: 'Теги (необязательно, разделенные запятой)',
+  })
+  @ApiParam({ name: 'page', description: 'Номер страницы', required: false })
+  @ApiParam({
+    name: 'perPage',
+    description: 'Количество элементов на странице',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Список компаний с пагинацией',
+    type: CreateCompanyDto,
+    isArray: true,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Компании с указанной категорией и/или городом не найдены',
+  })
+  @ApiResponse({ status: 500, description: 'Ошибка сервера' })
+  async getCompaniesByCategoryAndCity(
+    @Query('categoryName') categoryName: string,
+    @Query('city') city: string,
+    @Query('tags') tags: string | undefined,
+    @Query('page') page: number = 1,
+    @Query('perPage') perPage: number = 10,
+  ) {
+    let tagsArray: string[] | null = null;
+
+    if (tags) {
+      tagsArray = tags.split(',');
+    } else {
+      tagsArray = [];
+    }
+
+    if (!city) {
+      city = null;
+    }
+
+    if (!categoryName) {
+      categoryName = null;
+    }
+
+    return await this.companyService.getCompaniesByCategoryAndCity(
+      categoryName,
+      city,
+      tagsArray,
+      { page, perPage },
+    );
   }
 
   @Get('id/:id')

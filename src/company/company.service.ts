@@ -171,6 +171,62 @@ export class CompanyService {
     return { companies, totalCount };
   }
 
+  async getCompaniesByCategoryAndCity(
+    categoryName: string | null,
+    city: string | null,
+    tags: string[] | null,
+    options: PaginationOptionsInterface,
+  ) {
+    const skip = (options.page - 1) * options.perPage;
+
+    let queryBuilder = this.companyRepository
+      .createQueryBuilder('company')
+      .leftJoinAndSelect('company.categories', 'category')
+      .leftJoinAndSelect('company.tags', 'tag')
+      .leftJoinAndSelect('company.companymetadatums', 'metadata');
+
+    if (categoryName) {
+      queryBuilder = queryBuilder.where('category.name = :categoryName', {
+        categoryName,
+      });
+    }
+
+    if (city) {
+      queryBuilder = queryBuilder.andWhere('company.address LIKE :city', {
+        city: `%${city}%`,
+      });
+    }
+
+    if (tags && tags.length > 0) {
+      queryBuilder = queryBuilder.andWhere('tag.name IN (:...tags)', { tags });
+    }
+
+    queryBuilder = queryBuilder.take(options.perPage).skip(skip);
+
+    const totalCount = await queryBuilder.getCount();
+    let companies = await queryBuilder.getMany();
+
+    companies = await Promise.all(
+      companies.map(async (company) => {
+        if (company.subscription === 'None') {
+        }
+
+        company.services = await this.serviceRepository.find({
+          where: { companies: { id: company.id } },
+          take: 3,
+        });
+
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+
+        return company;
+      }),
+    );
+
+    return { companies, totalCount };
+  }
+
   async findCompanyByName(name: string): Promise<Company> {
     try {
       const company = await this.companyRepository.findOne({
@@ -186,7 +242,6 @@ export class CompanyService {
           'services.parent',
         ],
       });
-
       if (company.subscription === 'None') {
         company.geodata = null;
         if (company.description != null) {
