@@ -217,9 +217,10 @@ export class CompanyService {
         });
 
         company.companymetadatums = company.companymetadatums.filter(
-          (metadata) => metadata.type === 'images',
+          (metadata) =>
+            metadata.type === 'images' || metadata.type === 'phones',
         );
-
+        console.log(company);
         return company;
       }),
     );
