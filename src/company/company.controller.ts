@@ -12,7 +12,13 @@ import {
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
 import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum.entity';
-import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 import { CreateCompanyMetadatumDto } from '../company-metadata/dto/create-company-metadatum.dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -52,6 +58,7 @@ export class CompanyController {
   }
 
   @Get('/getAll/:page/:perPage')
+  @ApiBearerAuth()
   @ApiParam({ name: 'page', description: 'The page number', required: false })
   @ApiParam({
     name: 'perPage',
@@ -147,7 +154,7 @@ export class CompanyController {
     @Query('page') page: number = 1,
     @Query('perPage') perPage: number = 10,
   ) {
-    let tagsArray: string[] | null = null;
+    let tagsArray: string[] | null;
 
     if (tags) {
       tagsArray = tags.split(',');
