@@ -60,7 +60,7 @@ export class Company {
   })
   services: Service[];
 
-  @Column({ default: 'None' })
+  @Column()
   subscription: string;
 
   @CreateDateColumn()

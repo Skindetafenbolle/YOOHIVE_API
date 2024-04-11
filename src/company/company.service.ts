@@ -573,6 +573,7 @@ export class CompanyService {
           await this.companyRepository.save(company);
         }
       }
+      company.subscription = companyData.subscription || 'None';
       if (company.companymetadatums === undefined) {
         const savedCompany = await this.companyRepository.save(company);
 

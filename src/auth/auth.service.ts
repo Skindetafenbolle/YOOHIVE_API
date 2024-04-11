@@ -12,12 +12,14 @@ export class AuthService {
 
   async validateUser(emailOrPhone: string, password: string): Promise<any> {
     const user = await this.userService.findOne(emailOrPhone);
-    if (user && (await argon2.verify(user.password, password))) {
-      const { ...rest } = user;
-      return rest;
+    if (!user) {
+      throw new Error('User not found'); // Возвращаем ошибку, если пользователь не найден
     }
-
-    return null;
+    if (!(await argon2.verify(user.password, password))) {
+      throw new Error('Invalid password'); // Возвращаем ошибку, если пароль неверный
+    }
+    const { ...rest } = user;
+    return rest;
   }
 
   async login(user: any) {
