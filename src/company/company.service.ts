@@ -220,7 +220,6 @@ export class CompanyService {
           (metadata) =>
             metadata.type === 'images' || metadata.type === 'phones',
         );
-        console.log(company);
         return company;
       }),
     );

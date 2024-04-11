@@ -6,6 +6,8 @@ import { User } from './entities/user.entity';
 import { Company } from '../company/entities/company.entity';
 import { CompanyModule } from '../company/company.module';
 import { AuthModule } from '../auth/auth.module';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Module({
   imports: [
@@ -14,7 +16,7 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, JwtAuthGuard, RolesGuard],
   exports: [UserService],
 })
 export class UserModule {}

@@ -6,6 +6,8 @@ import {
   Param,
   Post,
   Query,
+  SetMetadata,
+  UseGuards,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { Company } from './entities/company.entity';
@@ -14,6 +16,8 @@ import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 import { CreateCompanyMetadatumDto } from '../company-metadata/dto/create-company-metadatum.dto';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('company')
 @ApiTags('company')
@@ -67,6 +71,8 @@ export class CompanyController {
     status: 500,
     description: 'Server error',
   })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['Admin', 'superAdmin'])
   async getAllCompany(
     @Param('page') page: number = 1,
     @Param('perPage') perPage: number = 10,

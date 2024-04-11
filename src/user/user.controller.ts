@@ -6,14 +6,18 @@ import {
   ValidationPipe,
   UseGuards,
   Request,
-  Get,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { LocalAuthGuards } from '../auth/local-auth.guards';
 import { AuthService } from '../auth/auth.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -49,11 +53,5 @@ export class UserController {
   })
   login(@Request() req): any {
     return this.authService.login(req.user);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('/hello')
-  getHello(@Request() req): string {
-    return req.user;
   }
 }

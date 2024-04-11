@@ -12,6 +12,8 @@ import { CompanyMetadataModule } from '../company-metadata/company-metadata.modu
 import { CategoryModule } from '../category/category.module';
 import { ServiceModule } from '../service/service.module';
 import { Service } from '../service/entities/service.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { Service } from '../service/entities/service.entity';
     ServiceModule,
   ],
   controllers: [CompanyController],
-  providers: [CompanyService],
+  providers: [CompanyService, JwtAuthGuard, RolesGuard],
   exports: [CompanyService],
 })
 export class CompanyModule {}
