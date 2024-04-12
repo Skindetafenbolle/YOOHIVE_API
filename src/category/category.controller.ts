@@ -5,12 +5,17 @@ import {
   Get,
   NotFoundException,
   Param,
-  Post, Put,
+  Post,
+  Put,
+  SetMetadata,
+  UseGuards,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
 import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('category')
 @ApiTags('categories')
@@ -47,6 +52,8 @@ export class CategoryController {
     }
   }
   @Put('/edit/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['superAdmin'])
   async updateCategory(
     @Param('id') id: number,
     @Body('name') name: string,
