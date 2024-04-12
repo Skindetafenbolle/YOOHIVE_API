@@ -308,6 +308,7 @@ export class CompanyController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
   @Post('edit/:companyId')
   async editCompany(
     @Param('companyId') companyId: number,
