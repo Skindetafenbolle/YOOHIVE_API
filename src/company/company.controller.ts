@@ -310,6 +310,13 @@ export class CompanyController {
   @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
   @ApiBearerAuth()
   @Post('edit/:companyId')
+  @ApiParam({ name: 'companyId', description: 'The ID of the company' })
+  @ApiBody({ type: CreateCompanyDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Company edited successfully',
+    type: Company,
+  })
   async editCompany(
     @Param('companyId') companyId: number,
     @Body() data: Partial<Company>,
