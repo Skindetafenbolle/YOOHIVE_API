@@ -7,11 +7,21 @@ import {
   Delete,
   NotFoundException,
   Put,
+  UseGuards,
+  SetMetadata,
 } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { Tag } from './entities/tag.entity';
-import { ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('tag')
 @ApiTags('tag')
@@ -44,6 +54,11 @@ export class TagController {
   }
 
   @Put('edit/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['superAdmin'])
+  @ApiParam({ name: 'id', description: 'The ID of the tag' })
+  @ApiResponse({ status: 200, description: 'Tag found', type: CreateTagDto })
+  @ApiBearerAuth()
   async updateTag(
     @Param('id') id: number,
     @Body('name') name: string,

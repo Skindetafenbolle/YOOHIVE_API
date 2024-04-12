@@ -17,12 +17,14 @@ export class RolesGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-
     if (roles.includes('superAdmin') && user.role === 'superAdmin') {
       return true;
     }
 
-    if (roles.includes('companyAdmin') && user.role === 'companyAdmin') {
+    if (
+      (roles.includes('companyAdmin') || roles.includes('companyManager')) &&
+      (user.role === 'companyAdmin' || user.role === 'companyManager')
+    ) {
       const companyIdFromToken = user.company;
       const companyIdFromRoute = +request.params.companyId;
       if (companyIdFromToken === companyIdFromRoute) {
