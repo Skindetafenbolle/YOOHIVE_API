@@ -5,7 +5,7 @@ import {
   Get,
   NotFoundException,
   Param,
-  Post,
+  Post, Put,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -46,7 +46,20 @@ export class CategoryController {
       throw new NotFoundException(error.message);
     }
   }
-
+  @Put('/edit/:id')
+  async updateCategory(
+    @Param('id') id: number,
+    @Body('name') name: string,
+  ): Promise<Category> {
+    try {
+      return await this.categoryService.updateCategory(id, name);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
+  }
   @Get('/all')
   @ApiResponse({
     status: 200,

@@ -36,4 +36,19 @@ export class CategoryService {
   async getCategoryByName(name: string): Promise<Category> {
     return await this.categoryRepository.findOne({ where: { name } });
   }
+
+  async updateCategory(id: number, name: string): Promise<Category> {
+    const categoryToUpdate = await this.categoryRepository.findOne({
+      where: { id },
+    });
+
+    if (!categoryToUpdate) {
+      throw new Error(`Category with id ${id} not found`);
+    }
+
+    categoryToUpdate.name = name;
+    categoryToUpdate.slug = name;
+
+    return await this.categoryRepository.save(categoryToUpdate);
+  }
 }
