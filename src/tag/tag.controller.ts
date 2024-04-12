@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   NotFoundException,
+  Put,
 } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -40,6 +41,21 @@ export class TagController {
   @ApiResponse({ status: 200, description: 'Tag found', type: CreateTagDto })
   async getTagById(@Param('id') id: number): Promise<Tag> {
     return await this.tagService.getTagById(id);
+  }
+
+  @Put('edit/:id')
+  async updateTag(
+    @Param('id') id: number,
+    @Body('name') name: string,
+  ): Promise<Tag> {
+    try {
+      return await this.tagService.updateTag(id, name);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Delete('remove/:id')

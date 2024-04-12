@@ -14,7 +14,19 @@ export class TagService {
     const tag = this.tagRepository.create({ name });
     return await this.tagRepository.save(tag);
   }
+  async updateTag(id: number, newName: string): Promise<Tag> {
+    const tag = await this.tagRepository.findOne({ where: { id } });
 
+    if (!tag) {
+      throw new NotFoundException(`Tag with id ${id} not found`);
+    }
+    if (tag.name !== newName) {
+      tag.name = newName;
+      await this.tagRepository.save(tag);
+    }
+
+    return tag;
+  }
   async removeTag(id: number): Promise<Tag> {
     const tagToRemove = await this.tagRepository.findOne({
       where: {
