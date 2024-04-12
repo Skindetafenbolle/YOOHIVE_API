@@ -306,8 +306,6 @@ export class CompanyController {
     return this.companyService.removeUserFromCompany(companyId, userId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
   @Post('edit/:companyId')
   async editCompany(
     @Param('companyId') companyId: number,

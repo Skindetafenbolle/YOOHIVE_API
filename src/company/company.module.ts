@@ -14,7 +14,6 @@ import { ServiceModule } from '../service/service.module';
 import { Service } from '../service/entities/service.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -32,7 +31,7 @@ import { JwtService } from '@nestjs/jwt';
     ServiceModule,
   ],
   controllers: [CompanyController],
-  providers: [CompanyService, JwtAuthGuard, RolesGuard, JwtService],
+  providers: [CompanyService, JwtAuthGuard, RolesGuard],
   exports: [CompanyService],
 })
 export class CompanyModule {}
