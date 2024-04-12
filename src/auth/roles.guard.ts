@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
@@ -13,6 +18,19 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    return roles.some((role) => user.role === role);
+    if (roles.includes('superAdmin') && user.role === 'superAdmin') {
+      return true;
+    }
+
+    if (roles.includes('companyAdmin') && user.role === 'companyAdmin') {
+      const companyIdFromToken = user.company;
+      const companyIdFromRoute = +request.params.companyId;
+      if (companyIdFromToken === companyIdFromRoute) {
+        return true;
+      }
+      throw new UnauthorizedException('You do not have access to this company');
+    }
+
+    return false;
   }
 }
