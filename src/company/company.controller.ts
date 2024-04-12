@@ -30,6 +30,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
   @Post(':id/metadatum')
   @ApiParam({ name: 'id', description: 'The ID of the company' })
   @ApiBody({
@@ -58,7 +61,6 @@ export class CompanyController {
   }
 
   @Get('/getAll/:page/:perPage')
-  @ApiBearerAuth()
   @ApiParam({ name: 'page', description: 'The page number', required: false })
   @ApiParam({
     name: 'perPage',
@@ -78,8 +80,6 @@ export class CompanyController {
     status: 500,
     description: 'Server error',
   })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @SetMetadata('roles', ['Admin', 'superAdmin'])
   async getAllCompany(
     @Param('page') page: number = 1,
     @Param('perPage') perPage: number = 10,
@@ -241,6 +241,9 @@ export class CompanyController {
     return this.companyService.findCompaniesByName(name, { page, perPage });
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
   @Post(':companyId/users/:userId')
   @ApiParam({ name: 'companyId', description: 'The ID of the company' })
   @ApiParam({ name: 'userId', description: 'The ID of the user' })
@@ -264,6 +267,9 @@ export class CompanyController {
     return this.companyService.addUserToCompany(userId, companyId);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
   @Delete('remove/:id')
   @ApiParam({ name: 'id', description: 'The ID of the company' })
   @ApiResponse({
@@ -283,6 +289,9 @@ export class CompanyController {
     return this.companyService.removeCompany(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
   @Delete(':companyId/users/:userId')
   @ApiParam({ name: 'companyId', description: 'The ID of the company' })
   @ApiParam({ name: 'userId', description: 'The ID of the user' })
@@ -324,6 +333,9 @@ export class CompanyController {
     return this.companyService.editCompany(companyId, data);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['superAdmin'])
+  @ApiBearerAuth()
   @Post('changeSub/:companyId/:variant')
   @ApiParam({ name: 'companyId', description: 'The ID of the company' })
   @ApiParam({ name: 'variant', description: 'Variant of subs' })
