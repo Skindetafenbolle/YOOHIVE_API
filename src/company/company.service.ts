@@ -18,7 +18,6 @@ export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
-    @InjectRepository(Tag)
     private readonly tagService: TagService,
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
@@ -544,6 +543,7 @@ export class CompanyService {
         exampleWorks,
         email,
         googleSchedule,
+        subscription,
       } = companyData;
 
       let company = await this.companyRepository.findOne({
@@ -625,7 +625,6 @@ export class CompanyService {
             company: savedCompany,
           });
         }
-
         const tags = await this.tagService.saveTags(specialTags);
         const languagesArray = await this.tagService.saveLanguages(languages);
         if (!company.tags) {
@@ -633,6 +632,10 @@ export class CompanyService {
         }
         company.tags = [...company.tags, ...tags, ...languagesArray];
         companies.push(savedCompany);
+        if (!subscription) {
+          company.subscription = 'None';
+        }
+        company.subscription = subscription;
         await this.companyRepository.save(company);
       }
       if (company.companymetadatums !== null) {
