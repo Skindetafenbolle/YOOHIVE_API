@@ -200,28 +200,18 @@ export class CompanyService {
       queryBuilder = queryBuilder.andWhere('tag.name IN (:...tags)', { tags });
     }
 
-    queryBuilder = queryBuilder.take(options.perPage).skip(skip);
+    queryBuilder = queryBuilder
+      .select([
+        'company.id',
+        'company.name',
+        'company.description',
+        'company.address',
+        'metadata',
+      ])
+      .take(options.perPage)
+      .skip(skip);
 
-    const totalCount = await queryBuilder.getCount();
-    let companies = await queryBuilder.getMany();
-
-    companies = await Promise.all(
-      companies.map(async (company) => {
-        if (company.subscription === 'None') {
-        }
-
-        company.services = await this.serviceRepository.find({
-          where: { companies: { id: company.id } },
-          take: 3,
-        });
-
-        company.companymetadatums = company.companymetadatums.filter(
-          (metadata) =>
-            metadata.type === 'images' || metadata.type === 'phones',
-        );
-        return company;
-      }),
-    );
+    const [companies, totalCount] = await queryBuilder.getManyAndCount();
 
     return { companies, totalCount };
   }
