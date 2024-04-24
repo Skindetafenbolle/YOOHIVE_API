@@ -549,6 +549,7 @@ export class CompanyService {
           address,
           source,
           affiliation,
+          subscription,
           geoData,
         );
         company.categories = [categoryObject];
@@ -563,7 +564,6 @@ export class CompanyService {
           await this.companyRepository.save(company);
         }
       }
-      company.subscription = companyData.subscription || 'None';
       if (company.companymetadatums === undefined) {
         const savedCompany = await this.companyRepository.save(company);
 
@@ -627,8 +627,7 @@ export class CompanyService {
         }
         company.subscription = subscription;
         await this.companyRepository.save(company);
-      }
-      if (company.companymetadatums !== null) {
+      } else {
         console.log('Обновлена только категория');
       }
     }
@@ -642,6 +641,7 @@ export class CompanyService {
     address: string,
     source: string,
     affiliation: string,
+    subscription: string,
     geoData: { latitude: number; longitude: number } | null,
   ): Promise<Company> {
     return this.companyRepository.create({
@@ -650,6 +650,7 @@ export class CompanyService {
       address,
       source,
       affiliation,
+      subscription,
       geodata: geoData,
     });
   }
