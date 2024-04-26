@@ -11,6 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
+import { SubcategoryModule } from './subcategory/subcategory.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { JwtService } from '@nestjs/jwt';
       }),
       inject: [ConfigService],
     }),
+    SubcategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],

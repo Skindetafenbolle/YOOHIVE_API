@@ -13,6 +13,7 @@ import { User } from '../../user/entities/user.entity';
 import { CompanyMetadatum } from '../../company-metadata/entities/company-metadatum.entity';
 import { Tag } from '../../tag/entities/tag.entity';
 import { Service } from '../../service/entities/service.entity';
+import { Subcategory } from '../../subcategory/entities/subcategory.entity';
 
 @Entity()
 export class Company {
@@ -40,6 +41,10 @@ export class Company {
   @ManyToMany(() => Category, (category) => category.companies)
   @JoinTable()
   categories: Category[];
+
+  @ManyToMany(() => Subcategory, (subcategory) => subcategory.companies)
+  @JoinTable()
+  subcategories: Subcategory[];
 
   @ManyToMany(() => Tag, (tag) => tag.companies)
   @JoinTable()

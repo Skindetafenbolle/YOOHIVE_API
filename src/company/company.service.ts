@@ -12,6 +12,7 @@ import { CategoryService } from '../category/category.service';
 import { Service } from '../service/entities/service.entity';
 import { ServiceService } from '../service/service.service';
 import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
+import { SubcategoryService } from '../subcategory/subcategory.service';
 
 @Injectable()
 export class CompanyService {
@@ -25,6 +26,7 @@ export class CompanyService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
     private readonly categoryService: CategoryService,
+    private readonly subcategoryService: SubcategoryService,
     @InjectRepository(CompanyMetadatum)
     private readonly companyMetadatumRepository: Repository<CompanyMetadatum>,
     private companyMetadataService: CompanyMetadataService,
@@ -287,7 +289,7 @@ export class CompanyService {
         },
         take: options.perPage,
         skip: skip,
-        relations: ['tags', 'companymetadatums', 'categories'],
+        relations: ['tags', 'companymetadatums', 'categories', 'subcategories'],
       });
 
       companies = await Promise.all(
@@ -499,26 +501,36 @@ export class CompanyService {
   }
 
   async createCompanyFromParser(
-    data: any,
+    data: any[],
     source: string,
     category: string,
+    subcategories: string[],
   ): Promise<Company[]> {
+    console.log('Received data:', data);
+    console.log('Source:', source);
+    console.log('Category:', category);
+    console.log('Subcategories:', subcategories);
+
     const existingCategory =
       await this.categoryService.getCategoryByName(category);
     let categoryObject: Category;
 
-    if (existingCategory) {
-      categoryObject = existingCategory;
-    } else {
+    if (!existingCategory) {
+      console.log('Creating new category...');
       categoryObject = await this.categoryService.createCategory(
         category,
         category,
       );
+      console.log('New category created:', categoryObject);
+    } else {
+      categoryObject = existingCategory;
     }
 
     const companies: Company[] = [];
 
     for (const companyData of data) {
+      console.log('Processing company data:', companyData);
+
       const {
         name,
         description,
@@ -536,12 +548,16 @@ export class CompanyService {
         subscription,
       } = companyData;
 
+      console.log('Company name:', name);
+      console.log('Company address:', address);
+
       let company = await this.companyRepository.findOne({
         where: { name },
-        relations: ['categories', 'companymetadatums'],
+        relations: ['categories', 'companymetadatums', 'subcategories'],
       });
 
       if (!company) {
+        console.log('Company not found, creating new...');
         const geoData = await this.getGeoData(address);
         company = await this.createCompany(
           name,
@@ -552,18 +568,110 @@ export class CompanyService {
           subscription,
           geoData,
         );
+        console.log('New company created:', company);
+
         company.categories = [categoryObject];
+        console.log('Category added to the company:', categoryObject);
+
+        const subcategoryObjects = await Promise.all(
+          subcategories.map(async (subcategoryName) => {
+            console.log('Processing subcategory:', subcategoryName);
+            const existingSubcategory =
+              await this.subcategoryService.getSubcategoryByName(
+                subcategoryName,
+              );
+            if (existingSubcategory) {
+              console.log('Existing subcategory found:', existingSubcategory);
+              return existingSubcategory;
+            } else {
+              const newSubcategory =
+                await this.subcategoryService.createSubcategory(
+                  subcategoryName,
+                );
+              console.log('New subcategory created:', newSubcategory);
+              return newSubcategory;
+            }
+          }),
+        );
+
+        company.subcategories = subcategoryObjects;
+
+        if (!categoryObject.subcategories) {
+          categoryObject.subcategories = [];
+        }
+        categoryObject.subcategories.push(...subcategoryObjects);
+
+        await this.categoryRepository.save({
+          ...categoryObject,
+          subcategories: categoryObject.subcategories,
+        });
+
         companies.push(company);
       } else {
         const categoryExists = company.categories.some(
           (cat) => cat.id === categoryObject.id,
         );
-
         if (!categoryExists) {
           company.categories.push(categoryObject);
-          await this.companyRepository.save(company);
+          console.log('Category added to the company:', categoryObject);
         }
+
+        const subcategoryObjects = await Promise.all(
+          subcategories.map(async (subcategoryName) => {
+            console.log('Processing subcategory:', subcategoryName);
+            const existingSubcategory =
+              await this.subcategoryService.getSubcategoryByName(
+                subcategoryName,
+              );
+            console.log('Existing subcategory:', existingSubcategory);
+            if (existingSubcategory) {
+              return existingSubcategory;
+            } else {
+              const newSubcategory =
+                await this.subcategoryService.createSubcategory(
+                  subcategoryName,
+                );
+              console.log('New subcategory created:', newSubcategory);
+              return newSubcategory;
+            }
+          }),
+        );
+
+        company.subcategories = [
+          ...company.subcategories,
+          ...subcategoryObjects,
+        ];
+
+        const existingSubcategories = categoryObject.subcategories || [];
+
+        subcategoryObjects.forEach((subcatObj) => {
+          console.log('Processing subcategory:', subcatObj);
+          if (
+            !company.subcategories.some((subcat) => subcat.id === subcatObj.id)
+          ) {
+            company.subcategories.push(subcatObj);
+          }
+        });
+
+        // Добавляем новые подкатегории к объекту категории, если они отсутствуют
+        subcategoryObjects.forEach((subcatObj) => {
+          if (
+            !existingSubcategories.some((subcat) => subcat.id === subcatObj.id)
+          ) {
+            existingSubcategories.push(subcatObj);
+          }
+        });
+
+        // Сохраняем изменения в объекте категории
+        categoryObject.subcategories = existingSubcategories;
+        await this.categoryRepository.save(categoryObject);
+
+        // Сохраняем компанию с обновленными подкатегориями
+        await this.companyRepository.save(company);
+
+        console.log('Company updated:', company);
       }
+
       if (company.companymetadatums === undefined) {
         const savedCompany = await this.companyRepository.save(company);
 

@@ -14,6 +14,8 @@ import { ServiceModule } from '../service/service.module';
 import { Service } from '../service/entities/service.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { Subcategory } from '../subcategory/entities/subcategory.entity';
+import { SubcategoryModule } from '../subcategory/subcategory.module';
 
 @Module({
   imports: [
@@ -24,11 +26,13 @@ import { RolesGuard } from '../auth/roles.guard';
       CompanyMetadatum,
       User,
       Service,
+      Subcategory,
     ]),
     TagModule,
     CompanyMetadataModule,
     CategoryModule,
     ServiceModule,
+    SubcategoryModule,
   ],
   controllers: [CompanyController],
   providers: [CompanyService, JwtAuthGuard, RolesGuard],

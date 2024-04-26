@@ -76,4 +76,14 @@ export class CategoryController {
   async getAllCategories(): Promise<Category[]> {
     return await this.categoryService.getAllCategories();
   }
+
+  @Get('/:name')
+  @ApiResponse({
+    status: 200,
+    description: 'Category retrieved successfully',
+    type: [CreateCategoryDto],
+  })
+  async getCategoryByName(@Param('name') name: string): Promise<Category> {
+    return await this.categoryService.getCategoryByName(name);
+  }
 }

@@ -30,11 +30,14 @@ export class CategoryService {
   }
 
   async getAllCategories(): Promise<Category[]> {
-    return await this.categoryRepository.find();
+    return await this.categoryRepository.find({ relations: ['subcategories'] });
   }
 
   async getCategoryByName(name: string): Promise<Category> {
-    return await this.categoryRepository.findOne({ where: { name } });
+    return await this.categoryRepository.findOne({
+      where: { name },
+      relations: ['subcategories'],
+    });
   }
 
   async updateCategory(id: number, name: string): Promise<Category> {

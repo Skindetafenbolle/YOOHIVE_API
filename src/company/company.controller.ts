@@ -377,14 +377,19 @@ export class CompanyController {
     description: 'Server error',
   })
   async createCompanyFromParser(
-    @Body() data: any,
+    @Body() data: any[],
     @Param('source') source: string,
     @Param('category') category: string,
   ): Promise<Company[]> {
+    const subcategories = data.reduce((acc, curr) => {
+      acc.push(...curr.subcategories);
+      return acc;
+    }, []);
     return await this.companyService.createCompanyFromParser(
       data,
       source,
       category,
+      subcategories,
     );
   }
 }
