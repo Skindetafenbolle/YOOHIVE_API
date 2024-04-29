@@ -113,6 +113,7 @@ export class CompanyService {
 
     const query = this.companyRepository.createQueryBuilder('company');
     query.leftJoinAndSelect('company.categories', 'category');
+    query.leftJoinAndSelect('company.subcategories', 'subcategory');
     query.leftJoinAndSelect('company.tags', 'tag');
     query.leftJoinAndSelect('company.companymetadatums', 'metadata');
     query.where('category.id = :categoryId', { categoryId: category.id });
@@ -173,7 +174,7 @@ export class CompanyService {
   }
 
   async getCompaniesByCategoryAndCity(
-    categoryName: string | null,
+    subcategoryName: string | null,
     city: string | null,
     tags: string[] | null,
     options: PaginationOptionsInterface,
@@ -182,13 +183,13 @@ export class CompanyService {
 
     let queryBuilder = this.companyRepository
       .createQueryBuilder('company')
-      .leftJoinAndSelect('company.categories', 'category')
+      .leftJoinAndSelect('company.subcategories', 'subcategory')
       .leftJoinAndSelect('company.tags', 'tag')
       .leftJoinAndSelect('company.companymetadatums', 'metadata');
 
-    if (categoryName) {
-      queryBuilder = queryBuilder.where('category.name = :categoryName', {
-        categoryName,
+    if (subcategoryName) {
+      queryBuilder = queryBuilder.where('subcategory.name = :subcategoryName', {
+        subcategoryName,
       });
     }
 
@@ -228,6 +229,7 @@ export class CompanyService {
           'tags',
           'companymetadatums',
           'categories',
+          'subcategories',
           'users',
           'services',
           'services.parent',

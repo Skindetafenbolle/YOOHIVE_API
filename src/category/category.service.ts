@@ -40,6 +40,19 @@ export class CategoryService {
     });
   }
 
+  async getSubcategoryNamesByCategoryName(name: string): Promise<string[]> {
+    const category = await this.categoryRepository.findOne({
+      where: { name },
+      relations: ['subcategories'],
+    });
+
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    return category.subcategories.map((subcategory) => subcategory.name);
+  }
+
   async updateCategory(id: number, name: string): Promise<Category> {
     const categoryToUpdate = await this.categoryRepository.findOne({
       where: { id },

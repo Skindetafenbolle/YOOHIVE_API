@@ -124,7 +124,7 @@ export class CompanyController {
   }
 
   @Get('/search')
-  @ApiParam({ name: 'categoryName', description: 'Название категории' })
+  @ApiParam({ name: 'subcategoryName', description: 'Название подкатегории' })
   @ApiParam({ name: 'city', description: 'Название города' })
   @ApiParam({
     name: 'tags',
@@ -144,11 +144,11 @@ export class CompanyController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Компании с указанной категорией и/или городом не найдены',
+    description: 'Компании с указанной подкатегорией и/или городом не найдены',
   })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
   async getCompaniesByCategoryAndCity(
-    @Query('categoryName') categoryName: string,
+    @Query('categoryName') subcategoryName: string,
     @Query('city') city: string,
     @Query('tags') tags: string | undefined,
     @Query('page') page: number = 1,
@@ -166,12 +166,12 @@ export class CompanyController {
       city = null;
     }
 
-    if (!categoryName) {
-      categoryName = null;
+    if (!subcategoryName) {
+      subcategoryName = null;
     }
 
     return await this.companyService.getCompaniesByCategoryAndCity(
-      categoryName,
+      subcategoryName,
       city,
       tagsArray,
       { page, perPage },
