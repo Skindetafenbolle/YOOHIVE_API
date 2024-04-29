@@ -18,4 +18,8 @@ export class SubcategoryService {
     const subcategory = this.subcategoryRepository.create({ name });
     return this.subcategoryRepository.save(subcategory);
   }
+
+  async getAllSubcategorys(): Promise<Subcategory[]> {
+    return this.subcategoryRepository.find();
+  }
 }
