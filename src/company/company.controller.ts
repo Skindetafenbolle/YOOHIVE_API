@@ -178,6 +178,25 @@ export class CompanyController {
     );
   }
 
+  @Get('address/unique')
+  async getUniqueLocations() {
+    const addresses = await this.companyService.getAllCompanyAddresses();
+
+    const uniqueLocations: string[] = [];
+
+    addresses.forEach((address) => {
+      const words = address.split(', ');
+
+      const cityRegion = words.slice(-2).join(', ');
+
+      if (!uniqueLocations.includes(cityRegion)) {
+        uniqueLocations.push(cityRegion);
+      }
+    });
+
+    return uniqueLocations;
+  }
+
   @Get('id/:id')
   @ApiParam({ name: 'id', description: 'The ID of the company' })
   @ApiResponse({

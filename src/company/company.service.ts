@@ -173,6 +173,25 @@ export class CompanyService {
     return { companies, totalCount };
   }
 
+  async getAllCompanyAddresses(): Promise<string[]> {
+    // Получаем все компании из базы данных
+    const companies = await this.companyRepository.find();
+
+    // Массив для хранения адресов
+    const addresses: string[] = [];
+
+    // Проходимся по каждой компании и добавляем ее адрес в массив
+    companies.forEach((company) => {
+      addresses.push(company.address);
+    });
+
+    return addresses;
+  }
+
+  // async getAdressCompany(variant: string) {
+  //   const companies = await this.companyRepository.find();
+  // }
+
   async getCompaniesByCategoryAndCity(
     subcategoryName: string | null,
     city: string | null,
@@ -213,10 +232,17 @@ export class CompanyService {
       ])
       .take(options.perPage)
       .skip(skip);
-
     const [companies, totalCount] = await queryBuilder.getManyAndCount();
 
-    return { companies, totalCount };
+    // Обрезаем описание компании до 200 символов
+    const companiesWithTrimmedDescription = companies.map((company) => {
+      const trimmedDescription = company.description
+        ? company.description.slice(0, 200) + '...'
+        : null;
+      return { ...company, description: trimmedDescription };
+    });
+
+    return { companies: companiesWithTrimmedDescription, totalCount };
   }
 
   async findCompanyByName(name: string): Promise<Company> {
