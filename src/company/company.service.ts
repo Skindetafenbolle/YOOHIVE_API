@@ -206,10 +206,20 @@ export class CompanyService {
       .leftJoinAndSelect('company.tags', 'tag')
       .leftJoinAndSelect('company.companymetadatums', 'metadata');
 
+    if (tags && tags.length > 0) {
+      queryBuilder = queryBuilder.where(
+        'company.subscription != :subscription',
+        { subscription: 'None' },
+      );
+    }
+
     if (subcategoryName) {
-      queryBuilder = queryBuilder.where('subcategory.name = :subcategoryName', {
-        subcategoryName,
-      });
+      queryBuilder = queryBuilder.andWhere(
+        'subcategory.name = :subcategoryName',
+        {
+          subcategoryName,
+        },
+      );
     }
 
     if (city) {
@@ -232,17 +242,10 @@ export class CompanyService {
       ])
       .take(options.perPage)
       .skip(skip);
+
     const [companies, totalCount] = await queryBuilder.getManyAndCount();
 
-    // Обрезаем описание компании до 200 символов
-    const companiesWithTrimmedDescription = companies.map((company) => {
-      const trimmedDescription = company.description
-        ? company.description.slice(0, 200) + '...'
-        : null;
-      return { ...company, description: trimmedDescription };
-    });
-
-    return { companies: companiesWithTrimmedDescription, totalCount };
+    return { companies, totalCount };
   }
 
   async findCompanyByName(name: string): Promise<Company> {
