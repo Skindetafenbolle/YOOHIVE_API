@@ -123,6 +123,44 @@ export class CompanyController {
     });
   }
 
+  @ApiParam({
+    name: 'subcategoryName',
+    description: 'The name of the category',
+  })
+  @ApiParam({ name: 'page', description: 'The page number', required: false })
+  @ApiParam({
+    name: 'perPage',
+    description: 'The number of items per page',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of companies by category with pagination',
+    type: [CreateCompanyDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Companies with category not found',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  @Get('/category/sub/:subcategoryName/:page/:perPage')
+  async getCompaniesBySubCategory(
+    @Param('subCategoryName') subCategoryName: string,
+    @Param('page') page: number,
+    @Param('perPage') perPage: number,
+  ) {
+    return await this.companyService.getCompaniesBySubCategory(
+      subCategoryName,
+      {
+        page,
+        perPage,
+      },
+    );
+  }
+
   @Get('/search')
   @ApiParam({ name: 'subcategoryName', description: 'Название подкатегории' })
   @ApiParam({ name: 'city', description: 'Название города' })

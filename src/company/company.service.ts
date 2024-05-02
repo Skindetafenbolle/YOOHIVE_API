@@ -173,6 +173,84 @@ export class CompanyService {
     return { companies, totalCount };
   }
 
+  async getCompaniesBySubCategory(
+    subcategoryName: string,
+    options: PaginationOptionsInterface,
+  ): Promise<{ companies: Company[]; totalCount: number }> {
+    const skip = (options.page - 1) * options.perPage;
+
+    const subCategory = await this.categoryRepository.findOne({
+      where: { name: subcategoryName },
+    });
+
+    if (!subCategory) {
+      return { companies: [], totalCount: 0 };
+    }
+
+    const query = this.companyRepository.createQueryBuilder('company');
+    query.leftJoinAndSelect('company.categories', 'category');
+    query.leftJoinAndSelect('company.subcategories', 'subcategory');
+    query.leftJoinAndSelect('company.tags', 'tag');
+    query.leftJoinAndSelect('company.companymetadatums', 'metadata');
+    query.where('subCategory.id = :subCategoryId', {
+      subCategoryId: subCategory.id,
+    });
+    query.take(options.perPage);
+    query.skip(skip);
+
+    const totalCount = await query.getCount();
+    let companies = await query.getMany();
+
+    companies = await Promise.all(
+      companies.map(async (company) => {
+        if (company.subscription === 'None') {
+          company.geodata = null;
+          if (company.description != null) {
+            company.description = company.description.slice(0, 220);
+          }
+          const imageMetadata = company.companymetadatums.find(
+            (metadata: CompanyMetadatum) => metadata.type === 'images',
+          );
+
+          company.companymetadatums = company.companymetadatums.filter(
+            (metadata: CompanyMetadatum) =>
+              metadata.type !== 'socialMediaLinks',
+          );
+
+          company.tags = company.tags.filter(
+            (tag: Tag) => tag.name === 'poland',
+          );
+
+          if (
+            imageMetadata &&
+            imageMetadata.value &&
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            imageMetadata.value.length > 0
+          ) {
+            const firstImage = imageMetadata.value[0];
+            company.companymetadatums.forEach((metadata: CompanyMetadatum) => {
+              if (metadata.type === 'images') {
+                metadata.value = [firstImage];
+              }
+            });
+          }
+        }
+        company.services = await this.serviceRepository.find({
+          where: { companies: { id: company.id } },
+          take: 3,
+        });
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
+        );
+
+        return company;
+      }),
+    );
+
+    return { companies, totalCount };
+  }
+
   async getAllCompanyAddresses(): Promise<string[]> {
     // Получаем все компании из базы данных
     const companies = await this.companyRepository.find();
