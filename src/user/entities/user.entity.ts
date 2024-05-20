@@ -25,7 +25,7 @@ export class User {
   @Column()
   role: string;
 
-  @ManyToOne(() => Company, (company) => company.users)
+  @ManyToOne(() => Company, (company) => company.users, { nullable: true })
   companies: Company;
 
   @CreateDateColumn()

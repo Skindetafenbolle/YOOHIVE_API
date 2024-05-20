@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
+  Put,
   Query,
   SetMetadata,
   UseGuards,
@@ -24,6 +26,8 @@ import { CreateCompanyMetadatumDto } from '../company-metadata/dto/create-compan
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { RolesGuard } from '../auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
+import { Service } from '../service/entities/service.entity';
 
 @Controller('company')
 @ApiTags('company')
@@ -160,7 +164,6 @@ export class CompanyController {
       },
     );
   }
-
   @Get('/search')
   @ApiParam({ name: 'subcategoryName', description: 'Название подкатегории' })
   @ApiParam({ name: 'city', description: 'Название города' })
@@ -414,6 +417,113 @@ export class CompanyController {
     @Param('variant') variant: string,
   ): Promise<Company> {
     return this.companyService.changeSub(companyId, variant);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
+  @Patch('/editCompany/:companyId')
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    type: Company,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Failed',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  async updateCompany(
+    @Param('companyId') id: number,
+    @Body() updateCompanyDto: UpdateCompanyDto,
+  ): Promise<Company> {
+    return await this.companyService.updateCompany({ ...updateCompanyDto, id });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
+  @Put('/:companyId/metadata')
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  async updateCompanyMetadata(
+    @Param('companyId') companyId: number,
+    @Body() metadata: any[],
+  ) {
+    await this.companyService.updateCompanyMetadata(companyId, metadata);
+    return { success: true, message: 'Company metadata updated successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
+  @Put('/:companyId/services/:serviceId')
+  @ApiParam({ name: 'companyId', description: 'The ID of the company' })
+  @ApiParam({ name: 'serviceId', description: 'The ID of the service' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    type: Service,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Failed',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  async updateService(
+    @Param('companyId') companyId: number,
+    @Param('serviceId') serviceId: number,
+    @Body() newData: Partial<Service>,
+  ): Promise<Service> {
+    return this.companyService.updateService(companyId, serviceId, newData);
+  }
+
+  @Get('/payment')
+  async payment() {
+    return this.companyService.payment();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @ApiBearerAuth()
+  @Put('/:companyId/services/:serviceId/subservices')
+  @ApiParam({ name: 'companyId', description: 'The ID of the company' })
+  @ApiParam({ name: 'serviceId', description: 'The ID of the service' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    type: Service,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Failed',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Server error',
+  })
+  async addSubService(
+    @Param('companyId') companyId: number,
+    @Param('serviceId') serviceId: number,
+    @Body() subServiceData: Partial<Service>,
+  ): Promise<Service> {
+    return this.companyService.addSubService(
+      companyId,
+      serviceId,
+      subServiceData,
+    );
   }
 
   @Post('/createCompany/:source/:category')

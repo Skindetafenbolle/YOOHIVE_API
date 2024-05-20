@@ -25,4 +25,11 @@ export class CompanyMetadataService {
 
     return await this.companyMetadatumRepository.save(companyMetadatum);
   }
+
+  // В файле company-metadata.service.ts
+
+  async updateCompanyMetadata(metadata: CompanyMetadatum): Promise<void> {
+    console.log(metadata + 'sjkflsdf');
+    await this.companyMetadatumRepository.save(metadata);
+  }
 }

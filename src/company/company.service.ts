@@ -13,7 +13,12 @@ import { Service } from '../service/entities/service.entity';
 import { ServiceService } from '../service/service.service';
 import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 import { SubcategoryService } from '../subcategory/subcategory.service';
+import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
+import Stripe from 'stripe';
 
+const stripe = new Stripe(
+  'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
+);
 @Injectable()
 export class CompanyService {
   constructor(
@@ -491,6 +496,24 @@ export class CompanyService {
     return company;
   }
 
+  async payment() {
+    // const company = await this.companyRepository.findOne({
+    //   where: {
+    //     id: companyId,
+    //   },
+    // });
+
+    return await stripe.checkout.sessions.create({
+      line_items: [{ price: 'price_1PHlaWH7KwidO226MeRPOH0R', quantity: 1 }],
+      shipping_address_collection: { allowed_countries: ['BY'] },
+      allow_promotion_codes: true,
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      success_url: 'http://localhost:3000' + `/success`,
+      cancel_url: 'http://localhost:3000' + `/failed`,
+    });
+  }
+
   async editCompany(
     companyId: number,
     data: Partial<Company>,
@@ -852,6 +875,83 @@ export class CompanyService {
     return companies;
   }
 
+  async updateCompanyMetadata(
+    companyId: number,
+    metadata: any[],
+  ): Promise<void> {
+    const company = await this.companyRepository.findOne({
+      where: { id: companyId },
+      relations: ['companymetadatums'],
+    });
+    console.log(company);
+    // Если компания не найдена, выбрасываем ошибку или возвращаем null
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    // Проходим по всем элементам метаданных и обновляем их
+    for (const data of metadata) {
+      // Проверяем, существует ли метаданные с данным типом
+      const metadataToUpdate = company.companymetadatums.find(
+        (meta) => meta.type === data.type,
+      );
+
+      // Если метаданные с данным типом найдены, обновляем их значение
+      if (metadataToUpdate) {
+        metadataToUpdate.value = data.value;
+        await this.companyMetadataService.updateCompanyMetadata(
+          metadataToUpdate,
+        );
+      }
+    }
+  }
+
+  async updateService(
+    companiesId: number,
+    serviceId: number,
+    newData: Partial<Service>,
+  ): Promise<Service> {
+    const company = await this.companyRepository.findOne({
+      where: { id: companiesId },
+      relations: ['services'],
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const service = company.services.find((s) => s.id === Number(serviceId));
+    if (!service) {
+      throw new NotFoundException('Service not found in company');
+    }
+
+    return this.serviceService.updateService(serviceId, newData);
+  }
+
+  async addSubService(
+    companyId: number,
+    serviceId: number,
+    subServiceData: Partial<Service>,
+  ): Promise<Service> {
+    const company = await this.companyRepository.findOne({
+      where: { id: companyId },
+      relations: ['services'],
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const service = company.services.find((s) => s.id === Number(serviceId));
+    if (!service) {
+      throw new NotFoundException('Service not found in company');
+    }
+
+    return this.serviceService.addSubService(
+      serviceId,
+      companyId,
+      subServiceData,
+    );
+  }
+
   private async createCompany(
     name: string,
     description: string,
@@ -870,6 +970,88 @@ export class CompanyService {
       subscription,
       geodata: geoData,
     });
+  }
+
+  async updateCompany(data: UpdateCompanyDto): Promise<Company> {
+    const { id, category, subcategories, tags, ...updateData } = data;
+    let company = await this.companyRepository.findOne({
+      where: { id },
+      relations: ['categories', 'subcategories', 'tags'],
+    });
+
+    if (!company) {
+      throw new Error(`Company with ID ${id} not found`);
+    }
+
+    Object.assign(company, updateData);
+
+    let categoryObject: Category | undefined;
+
+    if (category) {
+      const existingCategory =
+        await this.categoryService.getCategoryByName(category);
+
+      if (!existingCategory) {
+        categoryObject = await this.categoryService.createCategory(
+          category,
+          category,
+        );
+      } else {
+        categoryObject = existingCategory;
+      }
+
+      company.categories = [categoryObject];
+    }
+
+    if (
+      subcategories &&
+      Array.isArray(subcategories) &&
+      subcategories.length > 0
+    ) {
+      const subcategoryObjects = await Promise.all(
+        subcategories.map(async (subcategoryName) => {
+          const existingSubcategory =
+            await this.subcategoryService.getSubcategoryByName(subcategoryName);
+          if (existingSubcategory) {
+            return existingSubcategory;
+          } else {
+            return await this.subcategoryService.createSubcategory(
+              subcategoryName,
+            );
+          }
+        }),
+      );
+
+      company.subcategories = subcategoryObjects;
+
+      if (category && categoryObject) {
+        if (!categoryObject.subcategories) {
+          categoryObject.subcategories = [];
+        }
+        categoryObject.subcategories.push(...subcategoryObjects);
+        await this.categoryRepository.save(categoryObject);
+      }
+    }
+
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      const tagObjects = await Promise.all(
+        tags.map(async (tagName) => {
+          const existingTag = await this.tagService.getTagByName(tagName);
+          if (existingTag) {
+            return existingTag;
+          } else {
+            return await this.tagService.createTag(tagName);
+          }
+        }),
+      );
+
+      company.tags = tagObjects;
+    }
+
+    // Save the updated company
+    company = await this.companyRepository.save(company);
+
+    return company;
   }
 
   private async getGeoData(

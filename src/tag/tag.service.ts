@@ -55,6 +55,18 @@ export class TagService {
     return tag;
   }
 
+  async getTagByName(tagName: string): Promise<Tag> {
+    const tag = await this.tagRepository.findOne({
+      where: {
+        name: tagName,
+      },
+    });
+    if (!tag) {
+      throw new NotFoundException('Tag not found');
+    }
+    return tag;
+  }
+
   private async saveSpecialTags(specialTags: string[]): Promise<Tag[]> {
     if (!specialTags || specialTags.length === 0) {
       return [];

@@ -9,6 +9,8 @@ export class ServiceService {
   constructor(
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
   ) {}
 
   async createServices(
@@ -43,6 +45,35 @@ export class ServiceService {
     return await this.serviceRepository.save(services);
   }
 
+  async addSubService(
+    parentId: number,
+    companyId: number,
+    subServiceData: Partial<Service>,
+  ): Promise<Service> {
+    const parentService = await this.serviceRepository.findOne({
+      where: { id: parentId },
+      relations: ['subServices'],
+    });
+
+    if (!parentService) {
+      throw new NotFoundException('Parent service not found');
+    }
+
+    const company = await this.companyRepository.findOne({
+      where: { id: companyId },
+    });
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const newSubService = this.serviceRepository.create(subServiceData);
+    newSubService.parent = parentService;
+    newSubService.companies = company;
+    const savedSubService = await this.serviceRepository.save(newSubService);
+
+    return savedSubService;
+  }
+
   async getService(id: number) {
     const service = await this.serviceRepository.findOne({
       where: {
@@ -54,5 +85,17 @@ export class ServiceService {
       throw new NotFoundException('Service not found');
     }
     return service;
+  }
+
+  async updateService(id: number, newData: Partial<Service>): Promise<Service> {
+    const service = await this.serviceRepository.findOne({
+      where: { id: id },
+    });
+    if (!service) {
+      throw new NotFoundException('Service not found');
+    }
+
+    Object.assign(service, newData);
+    return await this.serviceRepository.save(service);
   }
 }

@@ -17,6 +17,7 @@ export class RolesGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest();
     const user = request.user;
+    console.log(user);
     if (roles.includes('superAdmin') && user.role === 'superAdmin') {
       return true;
     }
@@ -27,6 +28,8 @@ export class RolesGuard implements CanActivate {
     ) {
       const companyIdFromToken = user.company;
       const companyIdFromRoute = +request.params.companyId;
+      console.log(companyIdFromToken);
+      console.log(companyIdFromRoute);
       if (companyIdFromToken === companyIdFromRoute) {
         return true;
       }
