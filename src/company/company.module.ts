@@ -16,6 +16,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Subcategory } from '../subcategory/entities/subcategory.entity';
 import { SubcategoryModule } from '../subcategory/subcategory.module';
+import { CategoryTranslation } from '../category/entities/categoryTranslation.entity';
+import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTranslation.entity';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { SubcategoryModule } from '../subcategory/subcategory.module';
       User,
       Service,
       Subcategory,
+      CategoryTranslation,
+      SubcategoryTranslation,
     ]),
     TagModule,
     CompanyMetadataModule,

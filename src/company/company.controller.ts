@@ -26,8 +26,8 @@ import { CreateCompanyMetadatumDto } from '../company-metadata/dto/create-compan
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { RolesGuard } from '../auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
 import { Service } from '../service/entities/service.entity';
+import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
 
 @Controller('company')
 @ApiTags('company')
@@ -64,7 +64,8 @@ export class CompanyController {
     return this.companyService.addCompanyMetadatum(companyId, type, value);
   }
 
-  @Get('/getAll/:page/:perPage')
+  @Get('/getAll/:lang/:page/:perPage')
+  @ApiParam({ name: 'lang', description: 'The lang of the data' })
   @ApiParam({ name: 'page', description: 'The page number', required: false })
   @ApiParam({
     name: 'perPage',
@@ -84,18 +85,21 @@ export class CompanyController {
     status: 500,
     description: 'Server error',
   })
-  async getAllCompany(
-    @Param('page') page: number = 1,
-    @Param('perPage') perPage: number = 10,
-  ): Promise<{ companies: Company[]; totalCount: number }> {
+  async getAllCompanies(
+    @Param('lang') languageCode: string,
+    @Param('page') page = 1,
+    @Param('perPage') perPage = 10,
+  ) {
     const options: PaginationOptionsInterface = {
-      page: page,
-      perPage: perPage,
+      page,
+      perPage,
     };
-    return await this.companyService.getAllCompanies(options);
+
+    return this.companyService.getAllCompanies(options, languageCode);
   }
 
-  @Get('/category/:categoryName/:page/:perPage')
+  @Get('/category/:lang/:categoryName/:page/:perPage')
+  @ApiParam({ name: 'lang', description: 'The lang of the data' })
   @ApiParam({ name: 'categoryName', description: 'The name of the category' })
   @ApiParam({ name: 'page', description: 'The page number', required: false })
   @ApiParam({
@@ -118,15 +122,21 @@ export class CompanyController {
   })
   async getCompaniesByCategory(
     @Param('categoryName') categoryName: string,
+    @Param('lang') lang: string,
     @Param('page') page: number,
     @Param('perPage') perPage: number,
   ) {
-    return await this.companyService.getCompaniesByCategory(categoryName, {
-      page,
-      perPage,
-    });
+    return await this.companyService.getCompaniesByCategory(
+      categoryName,
+      lang,
+      {
+        page,
+        perPage,
+      },
+    );
   }
 
+  @Get('/category/sub/subs/:subcategoryName/:page/:perPage')
   @ApiParam({
     name: 'subcategoryName',
     description: 'The name of the category',
@@ -150,20 +160,24 @@ export class CompanyController {
     status: 500,
     description: 'Server error',
   })
-  @Get('/category/sub/:subcategoryName/:page/:perPage')
   async getCompaniesBySubCategory(
-    @Param('subCategoryName') subCategoryName: string,
+    @Param('subcategoryName') subcategoryName: string,
     @Param('page') page: number,
     @Param('perPage') perPage: number,
+    @Query('languageCode') languageCode?: string,
   ) {
+    console.log('Subcategory Name:', subcategoryName);
+    console.log('Language Code:', languageCode);
     return await this.companyService.getCompaniesBySubCategory(
-      subCategoryName,
+      subcategoryName,
+      languageCode,
       {
         page,
         perPage,
       },
     );
   }
+
   @Get('/search')
   @ApiParam({ name: 'subcategoryName', description: 'Название подкатегории' })
   @ApiParam({ name: 'city', description: 'Название города' })
@@ -189,7 +203,7 @@ export class CompanyController {
   })
   @ApiResponse({ status: 500, description: 'Ошибка сервера' })
   async getCompaniesByCategoryAndCity(
-    @Query('categoryName') subcategoryName: string,
+    @Query('subcategoryName') subcategoryName: string,
     @Query('city') city: string,
     @Query('tags') tags: string | undefined,
     @Query('page') page: number = 1,
@@ -272,8 +286,11 @@ export class CompanyController {
     status: 500,
     description: 'Server error',
   })
-  async getCompanyByName(@Param('name') name: string): Promise<Company> {
-    return this.companyService.findCompanyByName(name);
+  async getCompanyByName(
+    @Param('name') name: string,
+    @Query('languageCode') languageCode: string,
+  ): Promise<Company> {
+    return this.companyService.findCompanyByName(name, languageCode);
   }
 
   @Get('/name/:name/:page/:perPage')
@@ -295,10 +312,14 @@ export class CompanyController {
   })
   async getCompaniesByName(
     @Param('name') name: string,
+    @Query('languageCode') languageCode: string,
     @Param('page') page: number,
     @Param('perPage') perPage: number,
   ): Promise<{ companies: Company[]; totalCount: number }> {
-    return this.companyService.findCompaniesByName(name, { page, perPage });
+    return this.companyService.findCompaniesByName(name, languageCode, {
+      page,
+      perPage,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

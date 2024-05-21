@@ -15,6 +15,9 @@ import { PaginationOptionsInterface } from './dto/PaginationOptionsInterface';
 import { SubcategoryService } from '../subcategory/subcategory.service';
 import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
 import Stripe from 'stripe';
+import { CategoryTranslation } from '../category/entities/categoryTranslation.entity';
+import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTranslation.entity';
+import { Subcategory } from '../subcategory/entities/subcategory.entity';
 
 const stripe = new Stripe(
   'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
@@ -31,16 +34,23 @@ export class CompanyService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
     private readonly categoryService: CategoryService,
+    @InjectRepository(Subcategory)
+    private readonly subcategoryRepository: Repository<Subcategory>,
     private readonly subcategoryService: SubcategoryService,
     @InjectRepository(CompanyMetadatum)
     private readonly companyMetadatumRepository: Repository<CompanyMetadatum>,
     private companyMetadataService: CompanyMetadataService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(CategoryTranslation)
+    private readonly categoryTranslationRepository: Repository<CategoryTranslation>,
+    @InjectRepository(SubcategoryTranslation)
+    private readonly subCategoryTranslationRepository: Repository<SubcategoryTranslation>,
   ) {}
 
   async getAllCompanies(
     options: PaginationOptionsInterface,
+    languageCode: string,
   ): Promise<{ companies: Company[]; totalCount: number }> {
     const skip = (options.page - 1) * options.perPage;
 
@@ -49,7 +59,7 @@ export class CompanyService {
     let companies = await this.companyRepository.find({
       take: options.perPage,
       skip: skip,
-      relations: ['tags', 'companymetadatums', 'categories'],
+      relations: ['tags', 'companymetadatums', 'categories', 'subcategories'],
     });
 
     companies = await Promise.all(
@@ -59,6 +69,7 @@ export class CompanyService {
           if (company.description != null) {
             company.description = company.description.slice(0, 220);
           }
+
           const imageMetadata = company.companymetadatums.find(
             (metadata: CompanyMetadatum) => metadata.type === 'images',
           );
@@ -74,9 +85,7 @@ export class CompanyService {
 
           if (
             imageMetadata &&
-            imageMetadata.value &&
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
+            Array.isArray(imageMetadata.value) &&
             imageMetadata.value.length > 0
           ) {
             const firstImage = imageMetadata.value[0];
@@ -87,10 +96,55 @@ export class CompanyService {
             });
           }
         }
+
+        company.subcategories = await Promise.all(
+          company.subcategories.map(async (subCategory) => {
+            const translation =
+              await this.subCategoryTranslationRepository.findOne({
+                where: {
+                  subcategory: { id: subCategory.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...subCategory,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return subCategory;
+            }
+          }),
+        );
+
+        company.categories = await Promise.all(
+          company.categories.map(async (category) => {
+            const translation =
+              await this.categoryTranslationRepository.findOne({
+                where: {
+                  category: { id: category.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...category,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return category;
+            }
+          }),
+        );
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
         });
+
         company.companymetadatums = company.companymetadatums.filter(
           (metadata) => metadata.type === 'images',
         );
@@ -104,6 +158,7 @@ export class CompanyService {
 
   async getCompaniesByCategory(
     categoryName: string,
+    languageCode: string,
     options: PaginationOptionsInterface,
   ): Promise<{ companies: Company[]; totalCount: number }> {
     const skip = (options.page - 1) * options.perPage;
@@ -163,6 +218,50 @@ export class CompanyService {
             });
           }
         }
+
+        company.subcategories = await Promise.all(
+          company.subcategories.map(async (subCategory) => {
+            const translation =
+              await this.subCategoryTranslationRepository.findOne({
+                where: {
+                  subcategory: { id: subCategory.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...subCategory,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return subCategory;
+            }
+          }),
+        );
+
+        company.categories = await Promise.all(
+          company.categories.map(async (category) => {
+            const translation =
+              await this.categoryTranslationRepository.findOne({
+                where: {
+                  category: { id: category.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...category,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return category;
+            }
+          }),
+        );
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
@@ -180,16 +279,40 @@ export class CompanyService {
 
   async getCompaniesBySubCategory(
     subcategoryName: string,
+    languageCode: string | undefined,
     options: PaginationOptionsInterface,
   ): Promise<{ companies: Company[]; totalCount: number }> {
     const skip = (options.page - 1) * options.perPage;
 
-    const subCategory = await this.categoryRepository.findOne({
+    // Поиск подкатегории
+    const subcategory = await this.subcategoryRepository.findOne({
       where: { name: subcategoryName },
     });
 
-    if (!subCategory) {
+    if (!subcategory) {
+      console.log('Subcategory not found');
       return { companies: [], totalCount: 0 };
+    }
+
+    let subCategoryId = subcategory.id;
+    console.log('Found subcategory with ID:', subCategoryId);
+
+    // Поиск перевода подкатегории, если язык указан
+    if (languageCode) {
+      const subcategoryTranslation =
+        await this.subCategoryTranslationRepository.findOne({
+          where: { subcategory: { id: subCategoryId }, languageCode },
+        });
+
+      if (subcategoryTranslation && subcategoryTranslation.subcategory) {
+        console.log(
+          'Found translation for subcategory with ID:',
+          subCategoryId,
+        );
+        subCategoryId = subcategoryTranslation.subcategory.id;
+      } else {
+        console.log('Translation not found, using default subcategory');
+      }
     }
 
     const query = this.companyRepository.createQueryBuilder('company');
@@ -197,11 +320,11 @@ export class CompanyService {
     query.leftJoinAndSelect('company.subcategories', 'subcategory');
     query.leftJoinAndSelect('company.tags', 'tag');
     query.leftJoinAndSelect('company.companymetadatums', 'metadata');
-    query.where('subCategory.id = :subCategoryId', {
-      subCategoryId: subCategory.id,
-    });
+    query.where('subcategory.id = :subCategoryId', { subCategoryId });
     query.take(options.perPage);
     query.skip(skip);
+
+    console.log('Executing query with pagination:', options);
 
     const totalCount = await query.getCount();
     let companies = await query.getMany();
@@ -241,6 +364,51 @@ export class CompanyService {
             });
           }
         }
+
+        company.subcategories = await Promise.all(
+          company.subcategories.map(async (subCategory) => {
+            const translation =
+              await this.subCategoryTranslationRepository.findOne({
+                where: {
+                  subcategory: { id: subCategory.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...subCategory,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return subCategory;
+            }
+          }),
+        );
+
+        company.categories = await Promise.all(
+          company.categories.map(async (category) => {
+            const translation =
+              await this.categoryTranslationRepository.findOne({
+                where: {
+                  category: { id: category.id },
+                  languageCode: languageCode,
+                },
+              });
+
+            if (translation) {
+              return {
+                ...category,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return category;
+            }
+          }),
+        );
+
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
@@ -252,6 +420,8 @@ export class CompanyService {
         return company;
       }),
     );
+
+    console.log('Found companies:', companies);
 
     return { companies, totalCount };
   }
@@ -282,7 +452,6 @@ export class CompanyService {
     options: PaginationOptionsInterface,
   ) {
     const skip = (options.page - 1) * options.perPage;
-
     let queryBuilder = this.companyRepository
       .createQueryBuilder('company')
       .leftJoinAndSelect('company.subcategories', 'subcategory')
@@ -331,7 +500,10 @@ export class CompanyService {
     return { companies, totalCount };
   }
 
-  async findCompanyByName(name: string): Promise<Company> {
+  async findCompanyByName(
+    name: string,
+    languageCode: string,
+  ): Promise<Company> {
     try {
       const company = await this.companyRepository.findOne({
         where: {
@@ -378,6 +550,49 @@ export class CompanyService {
         }
       }
 
+      company.subcategories = await Promise.all(
+        company.subcategories.map(async (subCategory) => {
+          const translation =
+            await this.subCategoryTranslationRepository.findOne({
+              where: {
+                subcategory: { id: subCategory.id },
+                languageCode: languageCode,
+              },
+            });
+
+          if (translation) {
+            return {
+              ...subCategory,
+              name: translation.name,
+              description: translation.description,
+            };
+          } else {
+            return subCategory;
+          }
+        }),
+      );
+
+      company.categories = await Promise.all(
+        company.categories.map(async (category) => {
+          const translation = await this.categoryTranslationRepository.findOne({
+            where: {
+              category: { id: category.id },
+              languageCode: languageCode,
+            },
+          });
+
+          if (translation) {
+            return {
+              ...category,
+              name: translation.name,
+              description: translation.description,
+            };
+          } else {
+            return category;
+          }
+        }),
+      );
+
       return company;
     } catch (e) {
       throw new Error(e.message);
@@ -386,6 +601,7 @@ export class CompanyService {
 
   async findCompaniesByName(
     name: string,
+    languageCode: string,
     options: PaginationOptionsInterface,
   ): Promise<{ companies: Company[]; totalCount: number }> {
     try {
@@ -443,6 +659,51 @@ export class CompanyService {
               );
             }
           }
+
+          company.categories = await Promise.all(
+            company.categories.map(async (category) => {
+              const translation =
+                await this.categoryTranslationRepository.findOne({
+                  where: {
+                    category: { id: category.id },
+                    languageCode: languageCode,
+                  },
+                });
+
+              if (translation) {
+                return {
+                  ...category,
+                  name: translation.name,
+                  description: translation.description,
+                };
+              } else {
+                return category;
+              }
+            }),
+          );
+
+          company.subcategories = await Promise.all(
+            company.subcategories.map(async (subCategory) => {
+              const translation =
+                await this.subCategoryTranslationRepository.findOne({
+                  where: {
+                    subcategory: { id: subCategory.id },
+                    languageCode: languageCode,
+                  },
+                });
+
+              if (translation) {
+                return {
+                  ...subCategory,
+                  name: translation.name,
+                  description: translation.description,
+                };
+              } else {
+                return subCategory;
+              }
+            }),
+          );
+
           company.services = await this.serviceRepository.find({
             where: { companies: { id: company.id } },
             take: 3,
@@ -1048,7 +1309,6 @@ export class CompanyService {
       company.tags = tagObjects;
     }
 
-    // Save the updated company
     company = await this.companyRepository.save(company);
 
     return company;
