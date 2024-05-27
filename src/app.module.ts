@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompanyModule } from './company/company.module';
@@ -12,6 +12,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { JwtService } from '@nestjs/jwt';
 import { SubcategoryModule } from './subcategory/subcategory.module';
+import { ElasticSearchModule } from './elasticsearch/elasticsearch.module';
+import { IndexingModule } from './indexing/indexing.module';
+import { ElasticSearchService } from './elasticsearch/elasticsearch.service';
 
 @Module({
   imports: [
@@ -33,16 +36,25 @@ import { SubcategoryModule } from './subcategory/subcategory.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         synchronize: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        // ssl: {
+        //   rejectUnauthorized: false,
+        // },
         entities: [__dirname + '/**/*.entity{.js, .ts}'],
       }),
       inject: [ConfigService],
     }),
     SubcategoryModule,
+    ElasticSearchModule,
+    IndexingModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtService],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(private readonly elasticSearchService: ElasticSearchService) {}
+
+  async onModuleInit() {
+    await this.elasticSearchService.createIndex('services');
+    console.log('zslupa');
+  }
+}

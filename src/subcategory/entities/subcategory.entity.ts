@@ -17,6 +17,9 @@ export class Subcategory {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  slug: string;
+
   @ManyToMany(() => Company, (company) => company.subcategories)
   companies: Company[];
 

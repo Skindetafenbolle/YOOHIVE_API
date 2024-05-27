@@ -83,22 +83,40 @@ export class CategoryService {
   async getSubcategoryNamesByCategoryName(
     name: string,
     languageCode: string,
-  ): Promise<string[]> {
+  ): Promise<{ name: string; slug: string | null }[]> {
+    // Поиск категории с подкатегориями и переводами
     const category = await this.categoryRepository.findOne({
       where: { name },
-      relations: ['subcategories', 'translations'],
+      relations: ['subcategories', 'subcategories.translations'],
     });
 
+    // Если категория не найдена, выбрасываем ошибку
     if (!category) {
       throw new Error('Category not found');
     }
 
-    return category.subcategories.map((subcategory) => {
+    // Логируем найденную категорию и её подкатегории
+    console.log('Category found:', category);
+
+    // Преобразуем подкатегории, чтобы получить их имена с переводом и slug
+    const subcategories = category.subcategories.map((subcategory) => {
       const translation = subcategory.translations.find(
         (t) => t.languageCode === languageCode,
       );
-      return translation ? translation.name : subcategory.name;
+      console.log('Subcategory:', subcategory);
+      console.log('Translation:', translation);
+
+      // Если перевод найден, возвращаем имя перевода, иначе - оригинальное имя
+      return {
+        name: translation ? translation.name : subcategory.name,
+        slug: subcategory.slug,
+      };
     });
+
+    // Логируем результат
+    console.log('Subcategory names and slugs:', subcategories);
+
+    return subcategories;
   }
 
   async findAllTranslatedCategory(languageCode: string): Promise<any[]> {

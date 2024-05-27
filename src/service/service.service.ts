@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { Service } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from '../company/entities/company.entity';
+import { ElasticSearchService } from '../elasticsearch/elasticsearch.service';
 
 @Injectable()
 export class ServiceService {
@@ -11,6 +12,7 @@ export class ServiceService {
     private readonly serviceRepository: Repository<Service>,
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
+    private readonly elasticSearchService: ElasticSearchService, // добавьте этот параметр
   ) {}
 
   async createServices(
@@ -42,7 +44,11 @@ export class ServiceService {
       services.push(service);
     }
 
-    return await this.serviceRepository.save(services);
+    const savedServices = await this.serviceRepository.save(services);
+    for (const service of savedServices) {
+      await this.elasticSearchService.indexService(service);
+    }
+    return savedServices;
   }
 
   async addSubService(
@@ -97,5 +103,11 @@ export class ServiceService {
 
     Object.assign(service, newData);
     return await this.serviceRepository.save(service);
+  }
+
+  async searchServices(query: string) {
+    const result = await this.elasticSearchService.search(query);
+    console.log(result);
+    return result;
   }
 }
