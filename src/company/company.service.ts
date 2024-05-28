@@ -18,6 +18,7 @@ import Stripe from 'stripe';
 import { CategoryTranslation } from '../category/entities/categoryTranslation.entity';
 import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTranslation.entity';
 import { Subcategory } from '../subcategory/entities/subcategory.entity';
+import { TagTranslation } from '../tag/entities/tagTranslation.entity';
 
 const stripe = new Stripe(
   'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
@@ -46,6 +47,8 @@ export class CompanyService {
     private readonly categoryTranslationRepository: Repository<CategoryTranslation>,
     @InjectRepository(SubcategoryTranslation)
     private readonly subCategoryTranslationRepository: Repository<SubcategoryTranslation>,
+    @InjectRepository(TagTranslation)
+    private readonly tagTranslationRepository: Repository<TagTranslation>,
   ) {}
 
   async getAllCompanies(
@@ -140,6 +143,28 @@ export class CompanyService {
             }
           }),
         );
+
+        company.tags = await Promise.all(
+          company.tags.map(async (tag) => {
+            const translation = await this.tagTranslationRepository.findOne({
+              where: {
+                tag: { id: tag.id },
+                languageCode: languageCode,
+              },
+            });
+
+            if (translation) {
+              return {
+                ...tag,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              return tag;
+            }
+          }),
+        );
+
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
