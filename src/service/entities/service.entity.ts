@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
+import { ServiceTranslation } from './serviceTranslation.entity';
 
 @Entity()
 export class Service {
@@ -42,6 +43,9 @@ export class Service {
 
   @OneToMany(() => Service, (subService) => subService.parent)
   subServices: Service[];
+
+  @OneToMany(() => ServiceTranslation, (translation) => translation.service)
+  translations: ServiceTranslation[];
 
   @CreateDateColumn()
   createdAt: Date;

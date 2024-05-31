@@ -26,6 +26,6 @@ export class ServiceController {
 
   @Get('/elastic/search')
   async searchServices(@Query('q') query: string) {
-    return this.elasticSearchService.search(query); // Используйте elasticSearchService для поиска
+    return this.elasticSearchService.search(query);
   }
 }

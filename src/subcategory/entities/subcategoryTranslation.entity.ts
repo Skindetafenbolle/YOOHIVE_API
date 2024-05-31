@@ -18,5 +18,5 @@ export class SubcategoryTranslation {
   name: string;
 
   @Column()
-  description: string;
+  slug: string;
 }

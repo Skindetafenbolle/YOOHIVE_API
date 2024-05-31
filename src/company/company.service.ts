@@ -19,6 +19,7 @@ import { CategoryTranslation } from '../category/entities/categoryTranslation.en
 import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTranslation.entity';
 import { Subcategory } from '../subcategory/entities/subcategory.entity';
 import { TagTranslation } from '../tag/entities/tagTranslation.entity';
+import { ServiceTranslation } from '../service/entities/serviceTranslation.entity';
 
 const stripe = new Stripe(
   'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
@@ -49,6 +50,8 @@ export class CompanyService {
     private readonly subCategoryTranslationRepository: Repository<SubcategoryTranslation>,
     @InjectRepository(TagTranslation)
     private readonly tagTranslationRepository: Repository<TagTranslation>,
+    @InjectRepository(ServiceTranslation)
+    private serviceTranslationRepository: Repository<ServiceTranslation>,
   ) {}
 
   async getAllCompanies(
@@ -114,7 +117,7 @@ export class CompanyService {
               return {
                 ...subCategory,
                 name: translation.name,
-                description: translation.description,
+                slug: translation.slug,
               };
             } else {
               return subCategory;
@@ -258,7 +261,7 @@ export class CompanyService {
               return {
                 ...subCategory,
                 name: translation.name,
-                description: translation.description,
+                slug: translation.slug,
               };
             } else {
               return subCategory;
@@ -404,7 +407,7 @@ export class CompanyService {
               return {
                 ...subCategory,
                 name: translation.name,
-                description: translation.description,
+                slug: translation.slug,
               };
             } else {
               return subCategory;
@@ -466,7 +469,7 @@ export class CompanyService {
     return addresses;
   }
 
-  // async getAdressCompany(variant: string) {
+  // async getAddressCompany(variant: string) {
   //   const companies = await this.companyRepository.find();
   // }
 
@@ -541,7 +544,8 @@ export class CompanyService {
           'subcategories',
           'users',
           'services',
-          'services.parent',
+          // 'services.parent',
+          'services.subServices',
         ],
       });
       if (company.subscription === 'None') {
@@ -575,46 +579,56 @@ export class CompanyService {
         }
       }
 
+      const translateEntity = async (
+        entity,
+        translationRepository,
+        idField,
+      ) => {
+        const translation = await translationRepository.findOne({
+          where: {
+            [idField]: { id: entity.id },
+            languageCode: languageCode,
+          },
+        });
+
+        if (translation) {
+          return {
+            ...entity,
+            name: translation.name,
+            description: translation.description,
+          };
+        } else {
+          return entity;
+        }
+      };
+
       company.subcategories = await Promise.all(
         company.subcategories.map(async (subCategory) => {
-          const translation =
-            await this.subCategoryTranslationRepository.findOne({
-              where: {
-                subcategory: { id: subCategory.id },
-                languageCode: languageCode,
-              },
-            });
-
-          if (translation) {
-            return {
-              ...subCategory,
-              name: translation.name,
-              description: translation.description,
-            };
-          } else {
-            return subCategory;
-          }
+          return translateEntity(
+            subCategory,
+            this.subCategoryTranslationRepository,
+            'subcategory',
+          );
         }),
       );
 
       company.categories = await Promise.all(
         company.categories.map(async (category) => {
-          const translation = await this.categoryTranslationRepository.findOne({
-            where: {
-              category: { id: category.id },
-              languageCode: languageCode,
-            },
-          });
+          return translateEntity(
+            category,
+            this.categoryTranslationRepository,
+            'category',
+          );
+        }),
+      );
 
-          if (translation) {
-            return {
-              ...category,
-              name: translation.name,
-              description: translation.description,
-            };
-          } else {
-            return category;
-          }
+      company.services = await Promise.all(
+        company.services.map(async (service) => {
+          return translateEntity(
+            service,
+            this.serviceTranslationRepository,
+            'service',
+          );
         }),
       );
 
@@ -721,7 +735,7 @@ export class CompanyService {
                 return {
                   ...subCategory,
                   name: translation.name,
-                  description: translation.description,
+                  slug: translation.slug,
                 };
               } else {
                 return subCategory;
@@ -1013,7 +1027,6 @@ export class CompanyService {
         );
 
         company.subcategories = subcategoryObjects;
-
         if (!categoryObject.subcategories) {
           categoryObject.subcategories = [];
         }
@@ -1071,7 +1084,6 @@ export class CompanyService {
           }
         });
 
-        // Добавляем новые подкатегории к объекту категории, если они отсутствуют
         subcategoryObjects.forEach((subcatObj) => {
           if (
             !existingSubcategories.some((subcat) => subcat.id === subcatObj.id)
@@ -1080,11 +1092,9 @@ export class CompanyService {
           }
         });
 
-        // Сохраняем изменения в объекте категории
         categoryObject.subcategories = existingSubcategories;
         await this.categoryRepository.save(categoryObject);
 
-        // Сохраняем компанию с обновленными подкатегориями
         await this.companyRepository.save(company);
 
         console.log('Company updated:', company);
@@ -1170,19 +1180,15 @@ export class CompanyService {
       relations: ['companymetadatums'],
     });
     console.log(company);
-    // Если компания не найдена, выбрасываем ошибку или возвращаем null
     if (!company) {
       throw new Error('Company not found');
     }
 
-    // Проходим по всем элементам метаданных и обновляем их
     for (const data of metadata) {
-      // Проверяем, существует ли метаданные с данным типом
       const metadataToUpdate = company.companymetadatums.find(
         (meta) => meta.type === data.type,
       );
 
-      // Если метаданные с данным типом найдены, обновляем их значение
       if (metadataToUpdate) {
         metadataToUpdate.value = data.value;
         await this.companyMetadataService.updateCompanyMetadata(

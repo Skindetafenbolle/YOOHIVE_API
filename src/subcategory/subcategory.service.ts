@@ -35,6 +35,7 @@ export class SubcategoryService {
       name:
         category.translations.find((t) => t.languageCode === languageCode)
           ?.name || category.name,
+      slug: category.slug,
     }));
   }
 
@@ -55,7 +56,7 @@ export class SubcategoryService {
     return {
       ...subcategory,
       name: translation ? translation.name : null,
-      description: translation ? translation.description : null,
+      slug: translation ? translation.slug : null,
     };
   }
 }

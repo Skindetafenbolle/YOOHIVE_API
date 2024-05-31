@@ -19,6 +19,7 @@ import { SubcategoryModule } from '../subcategory/subcategory.module';
 import { CategoryTranslation } from '../category/entities/categoryTranslation.entity';
 import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTranslation.entity';
 import { TagTranslation } from '../tag/entities/tagTranslation.entity';
+import { ServiceTranslation } from '../service/entities/serviceTranslation.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { TagTranslation } from '../tag/entities/tagTranslation.entity';
       CategoryTranslation,
       SubcategoryTranslation,
       TagTranslation,
+      ServiceTranslation,
     ]),
     TagModule,
     CompanyMetadataModule,
