@@ -312,7 +312,6 @@ export class CompanyService {
   ): Promise<{ companies: Company[]; totalCount: number }> {
     const skip = (options.page - 1) * options.perPage;
 
-    // Поиск подкатегории
     const subcategory = await this.subcategoryRepository.findOne({
       where: { name: subcategoryName },
     });
@@ -325,7 +324,6 @@ export class CompanyService {
     let subCategoryId = subcategory.id;
     console.log('Found subcategory with ID:', subCategoryId);
 
-    // Поиск перевода подкатегории, если язык указан
     if (languageCode) {
       const subcategoryTranslation =
         await this.subCategoryTranslationRepository.findOne({
