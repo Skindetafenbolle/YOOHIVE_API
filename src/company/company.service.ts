@@ -20,6 +20,7 @@ import { SubcategoryTranslation } from '../subcategory/entities/subcategoryTrans
 import { Subcategory } from '../subcategory/entities/subcategory.entity';
 import { TagTranslation } from '../tag/entities/tagTranslation.entity';
 import { ServiceTranslation } from '../service/entities/serviceTranslation.entity';
+import axios from 'axios';
 
 const stripe = new Stripe(
   'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
@@ -53,6 +54,29 @@ export class CompanyService {
     @InjectRepository(ServiceTranslation)
     private serviceTranslationRepository: Repository<ServiceTranslation>,
   ) {}
+
+  private async translateText(
+    text: string,
+    targetLanguage: string,
+    sourceLanguage: string = 'auto',
+  ): Promise<string> {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=${sourceLanguage}&tl=${targetLanguage}&q=${encodeURIComponent(text)}`;
+
+    try {
+      const response = await axios.get(url);
+      if (response.data && Array.isArray(response.data[0])) {
+        const translations = response.data[0];
+        const translatedText = translations.map((t: any) => t[0]).join('');
+        return translatedText;
+      } else {
+        console.error('Unexpected response structure:', response.data);
+        return text;
+      }
+    } catch (error) {
+      console.error('Error translating text:', error);
+      return text;
+    }
+  }
 
   async getAllCompanies(
     options: PaginationOptionsInterface,
@@ -103,79 +127,103 @@ export class CompanyService {
           }
         }
 
-        company.subcategories = await Promise.all(
-          company.subcategories.map(async (subCategory) => {
-            const translation =
-              await this.subCategoryTranslationRepository.findOne({
-                where: {
-                  subcategory: { id: subCategory.id },
-                  languageCode: languageCode,
-                },
-              });
+        const translateEntity = async (
+          entity,
+          translationRepository,
+          idField,
+          languageCode,
+        ) => {
+          const translation = await translationRepository.findOne({
+            where: {
+              [idField]: { id: entity.id },
+              languageCode: languageCode,
+            },
+          });
 
-            if (translation) {
-              return {
-                ...subCategory,
-                name: translation.name,
-                slug: translation.slug,
-              };
-            } else {
-              return subCategory;
-            }
-          }),
+          if (translation) {
+            return {
+              ...entity,
+              name: translation.name,
+              description: translation.description,
+            };
+          } else {
+            const translatedName = await this.translateText(
+              entity.name,
+              languageCode,
+            );
+            const translatedDescription = entity.description
+              ? await this.translateText(entity.description, languageCode)
+              : '';
+
+            return {
+              ...entity,
+              name: translatedName,
+              description: translatedDescription,
+            };
+          }
+        };
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
         );
 
-        company.categories = await Promise.all(
-          company.categories.map(async (category) => {
-            const translation =
-              await this.categoryTranslationRepository.findOne({
-                where: {
-                  category: { id: category.id },
-                  languageCode: languageCode,
-                },
-              });
+        company.subcategories = company.subcategories
+          ? await Promise.all(
+              company.subcategories.map(async (subCategory) => {
+                return translateEntity(
+                  subCategory,
+                  this.subCategoryTranslationRepository,
+                  'subcategory',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
 
-            if (translation) {
-              return {
-                ...category,
-                name: translation.name,
-                description: translation.description,
-              };
-            } else {
-              return category;
-            }
-          }),
-        );
-
-        company.tags = await Promise.all(
-          company.tags.map(async (tag) => {
-            const translation = await this.tagTranslationRepository.findOne({
-              where: {
-                tag: { id: tag.id },
-                languageCode: languageCode,
-              },
-            });
-
-            if (translation) {
-              return {
-                ...tag,
-                name: translation.name,
-                description: translation.description,
-              };
-            } else {
-              return tag;
-            }
-          }),
-        );
+        company.categories = company.categories
+          ? await Promise.all(
+              company.categories.map(async (category) => {
+                return translateEntity(
+                  category,
+                  this.categoryTranslationRepository,
+                  'category',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
 
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
         });
 
-        company.companymetadatums = company.companymetadatums.filter(
-          (metadata) => metadata.type === 'images',
-        );
+        company.services = company.services
+          ? await Promise.all(
+              company.services.map(async (service) => {
+                service = await translateEntity(
+                  service,
+                  this.serviceTranslationRepository,
+                  'service',
+                  languageCode,
+                );
+
+                service.subServices = service.subServices
+                  ? await Promise.all(
+                      service.subServices.map(async (subService) => {
+                        return translateEntity(
+                          subService,
+                          this.serviceTranslationRepository,
+                          'service',
+                          languageCode,
+                        );
+                      }),
+                    )
+                  : [];
+
+                return service;
+              }),
+            )
+          : [];
 
         return company;
       }),
@@ -247,56 +295,103 @@ export class CompanyService {
           }
         }
 
-        company.subcategories = await Promise.all(
-          company.subcategories.map(async (subCategory) => {
-            const translation =
-              await this.subCategoryTranslationRepository.findOne({
-                where: {
-                  subcategory: { id: subCategory.id },
-                  languageCode: languageCode,
-                },
-              });
+        const translateEntity = async (
+          entity,
+          translationRepository,
+          idField,
+          languageCode,
+        ) => {
+          const translation = await translationRepository.findOne({
+            where: {
+              [idField]: { id: entity.id },
+              languageCode: languageCode,
+            },
+          });
 
-            if (translation) {
-              return {
-                ...subCategory,
-                name: translation.name,
-                slug: translation.slug,
-              };
-            } else {
-              return subCategory;
-            }
-          }),
+          if (translation) {
+            return {
+              ...entity,
+              name: translation.name,
+              description: translation.description,
+            };
+          } else {
+            const translatedName = await this.translateText(
+              entity.name,
+              languageCode,
+            );
+            const translatedDescription = entity.description
+              ? await this.translateText(entity.description, languageCode)
+              : '';
+
+            return {
+              ...entity,
+              name: translatedName,
+              description: translatedDescription,
+            };
+          }
+        };
+        company.companymetadatums = company.companymetadatums.filter(
+          (metadata) => metadata.type === 'images',
         );
 
-        company.categories = await Promise.all(
-          company.categories.map(async (category) => {
-            const translation =
-              await this.categoryTranslationRepository.findOne({
-                where: {
-                  category: { id: category.id },
-                  languageCode: languageCode,
-                },
-              });
+        company.subcategories = company.subcategories
+          ? await Promise.all(
+              company.subcategories.map(async (subCategory) => {
+                return translateEntity(
+                  subCategory,
+                  this.subCategoryTranslationRepository,
+                  'subcategory',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
 
-            if (translation) {
-              return {
-                ...category,
-                name: translation.name,
-                description: translation.description,
-              };
-            } else {
-              return category;
-            }
-          }),
-        );
+        company.categories = company.categories
+          ? await Promise.all(
+              company.categories.map(async (category) => {
+                return translateEntity(
+                  category,
+                  this.categoryTranslationRepository,
+                  'category',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
+
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
         });
-        company.companymetadatums = company.companymetadatums.filter(
-          (metadata) => metadata.type === 'images',
-        );
+
+        company.services = company.services
+          ? await Promise.all(
+              company.services.map(async (service) => {
+                service = await translateEntity(
+                  service,
+                  this.serviceTranslationRepository,
+                  'service',
+                  languageCode,
+                );
+
+                service.subServices = service.subServices
+                  ? await Promise.all(
+                      service.subServices.map(async (subService) => {
+                        return translateEntity(
+                          subService,
+                          this.serviceTranslationRepository,
+                          'service',
+                          languageCode,
+                        );
+                      }),
+                    )
+                  : [];
+
+                return service;
+              }),
+            )
+          : [];
 
         return company;
       }),
@@ -362,16 +457,16 @@ export class CompanyService {
           if (company.description != null) {
             company.description = company.description.slice(0, 220);
           }
-          const imageMetadata = company.companymetadatums.find(
+          const imageMetadata = company.companymetadatums?.find(
             (metadata: CompanyMetadatum) => metadata.type === 'images',
           );
 
-          company.companymetadatums = company.companymetadatums.filter(
+          company.companymetadatums = company.companymetadatums?.filter(
             (metadata: CompanyMetadatum) =>
               metadata.type !== 'socialMediaLinks',
           );
 
-          company.tags = company.tags.filter(
+          company.tags = company.tags?.filter(
             (tag: Tag) => tag.name === 'poland',
           );
 
@@ -383,7 +478,7 @@ export class CompanyService {
             imageMetadata.value.length > 0
           ) {
             const firstImage = imageMetadata.value[0];
-            company.companymetadatums.forEach((metadata: CompanyMetadatum) => {
+            company.companymetadatums?.forEach((metadata: CompanyMetadatum) => {
               if (metadata.type === 'images') {
                 metadata.value = [firstImage];
               }
@@ -391,57 +486,104 @@ export class CompanyService {
           }
         }
 
-        company.subcategories = await Promise.all(
-          company.subcategories.map(async (subCategory) => {
-            const translation =
-              await this.subCategoryTranslationRepository.findOne({
-                where: {
-                  subcategory: { id: subCategory.id },
-                  languageCode: languageCode,
-                },
-              });
-
-            if (translation) {
-              return {
-                ...subCategory,
-                name: translation.name,
-                slug: translation.slug,
-              };
-            } else {
-              return subCategory;
-            }
-          }),
+        company.companymetadatums = company.companymetadatums?.filter(
+          (metadata) => metadata.type === 'images',
         );
 
-        company.categories = await Promise.all(
-          company.categories.map(async (category) => {
-            const translation =
-              await this.categoryTranslationRepository.findOne({
-                where: {
-                  category: { id: category.id },
-                  languageCode: languageCode,
-                },
-              });
+        const translateEntity = async (
+          entity,
+          translationRepository,
+          idField,
+          languageCode,
+        ) => {
+          const translation = await translationRepository.findOne({
+            where: {
+              [idField]: { id: entity.id },
+              languageCode: languageCode,
+            },
+          });
 
-            if (translation) {
-              return {
-                ...category,
-                name: translation.name,
-                description: translation.description,
-              };
-            } else {
-              return category;
-            }
-          }),
-        );
+          if (translation) {
+            return {
+              ...entity,
+              name: translation.name,
+              description: translation.description,
+            };
+          } else {
+            const translatedName = await this.translateText(
+              entity.name,
+              languageCode,
+            );
+            const translatedDescription = entity.description
+              ? await this.translateText(entity.description, languageCode)
+              : '';
+
+            return {
+              ...entity,
+              name: translatedName,
+              description: translatedDescription,
+            };
+          }
+        };
+
+        company.subcategories = company.subcategories
+          ? await Promise.all(
+              company.subcategories.map(async (subCategory) => {
+                return translateEntity(
+                  subCategory,
+                  this.subCategoryTranslationRepository,
+                  'subcategory',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
+
+        company.categories = company.categories
+          ? await Promise.all(
+              company.categories.map(async (category) => {
+                return translateEntity(
+                  category,
+                  this.categoryTranslationRepository,
+                  'category',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
 
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
         });
-        company.companymetadatums = company.companymetadatums.filter(
-          (metadata) => metadata.type === 'images',
-        );
+
+        company.services = company.services
+          ? await Promise.all(
+              company.services.map(async (service) => {
+                service = await translateEntity(
+                  service,
+                  this.serviceTranslationRepository,
+                  'service',
+                  languageCode,
+                );
+
+                service.subServices = service.subServices
+                  ? await Promise.all(
+                      service.subServices.map(async (subService) => {
+                        return translateEntity(
+                          subService,
+                          this.serviceTranslationRepository,
+                          'service',
+                          languageCode,
+                        );
+                      }),
+                    )
+                  : [];
+
+                return service;
+              }),
+            )
+          : [];
 
         return company;
       }),
@@ -542,10 +684,14 @@ export class CompanyService {
           'subcategories',
           'users',
           'services',
-          // 'services.parent',
           'services.subServices',
         ],
       });
+
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
       if (company.subscription === 'None') {
         company.geodata = null;
         if (company.description != null) {
@@ -581,6 +727,7 @@ export class CompanyService {
         entity,
         translationRepository,
         idField,
+        languageCode,
       ) => {
         const translation = await translationRepository.findOne({
           where: {
@@ -596,7 +743,20 @@ export class CompanyService {
             description: translation.description,
           };
         } else {
-          return entity;
+          // Используем Google Translate API для перевода
+          const translatedName = await this.translateText(
+            entity.name,
+            languageCode,
+          );
+          const translatedDescription = entity.description
+            ? await this.translateText(entity.description, languageCode)
+            : '';
+
+          return {
+            ...entity,
+            name: translatedName,
+            description: translatedDescription,
+          };
         }
       };
 
@@ -606,6 +766,7 @@ export class CompanyService {
             subCategory,
             this.subCategoryTranslationRepository,
             'subcategory',
+            languageCode,
           );
         }),
       );
@@ -616,17 +777,32 @@ export class CompanyService {
             category,
             this.categoryTranslationRepository,
             'category',
+            languageCode,
           );
         }),
       );
 
       company.services = await Promise.all(
         company.services.map(async (service) => {
-          return translateEntity(
+          service = await translateEntity(
             service,
             this.serviceTranslationRepository,
             'service',
+            languageCode,
           );
+
+          service.subServices = await Promise.all(
+            service.subServices.map(async (subService) => {
+              return translateEntity(
+                subService,
+                this.serviceTranslationRepository,
+                'service',
+                languageCode,
+              );
+            }),
+          );
+
+          return service;
         }),
       );
 
@@ -697,57 +873,103 @@ export class CompanyService {
             }
           }
 
-          company.categories = await Promise.all(
-            company.categories.map(async (category) => {
-              const translation =
-                await this.categoryTranslationRepository.findOne({
-                  where: {
-                    category: { id: category.id },
-                    languageCode: languageCode,
-                  },
-                });
+          const translateEntity = async (
+            entity,
+            translationRepository,
+            idField,
+            languageCode,
+          ) => {
+            const translation = await translationRepository.findOne({
+              where: {
+                [idField]: { id: entity.id },
+                languageCode: languageCode,
+              },
+            });
 
-              if (translation) {
-                return {
-                  ...category,
-                  name: translation.name,
-                  description: translation.description,
-                };
-              } else {
-                return category;
-              }
-            }),
+            if (translation) {
+              return {
+                ...entity,
+                name: translation.name,
+                description: translation.description,
+              };
+            } else {
+              const translatedName = await this.translateText(
+                entity.name,
+                languageCode,
+              );
+              const translatedDescription = entity.description
+                ? await this.translateText(entity.description, languageCode)
+                : '';
+
+              return {
+                ...entity,
+                name: translatedName,
+                description: translatedDescription,
+              };
+            }
+          };
+          company.companymetadatums = company.companymetadatums.filter(
+            (metadata) => metadata.type === 'images',
           );
 
-          company.subcategories = await Promise.all(
-            company.subcategories.map(async (subCategory) => {
-              const translation =
-                await this.subCategoryTranslationRepository.findOne({
-                  where: {
-                    subcategory: { id: subCategory.id },
-                    languageCode: languageCode,
-                  },
-                });
+          company.subcategories = company.subcategories
+            ? await Promise.all(
+                company.subcategories.map(async (subCategory) => {
+                  return translateEntity(
+                    subCategory,
+                    this.subCategoryTranslationRepository,
+                    'subcategory',
+                    languageCode,
+                  );
+                }),
+              )
+            : [];
 
-              if (translation) {
-                return {
-                  ...subCategory,
-                  name: translation.name,
-                  slug: translation.slug,
-                };
-              } else {
-                return subCategory;
-              }
-            }),
-          );
+          company.categories = company.categories
+            ? await Promise.all(
+                company.categories.map(async (category) => {
+                  return translateEntity(
+                    category,
+                    this.categoryTranslationRepository,
+                    'category',
+                    languageCode,
+                  );
+                }),
+              )
+            : [];
 
           company.services = await this.serviceRepository.find({
             where: { companies: { id: company.id } },
             take: 3,
           });
-          company.companymetadatums = company.companymetadatums.filter(
-            (metadata) => metadata.type === 'images',
-          );
+
+          company.services = company.services
+            ? await Promise.all(
+                company.services.map(async (service) => {
+                  service = await translateEntity(
+                    service,
+                    this.serviceTranslationRepository,
+                    'service',
+                    languageCode,
+                  );
+
+                  service.subServices = service.subServices
+                    ? await Promise.all(
+                        service.subServices.map(async (subService) => {
+                          return translateEntity(
+                            subService,
+                            this.serviceTranslationRepository,
+                            'service',
+                            languageCode,
+                          );
+                        }),
+                      )
+                    : [];
+
+                  return service;
+                }),
+              )
+            : [];
 
           return company;
         }),
