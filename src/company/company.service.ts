@@ -192,6 +192,19 @@ export class CompanyService {
             )
           : [];
 
+        company.tags = company.tags
+          ? await Promise.all(
+              company.tags.map(async (tag) => {
+                return translateEntity(
+                  tag,
+                  this.tagTranslationRepository,
+                  'tag',
+                  languageCode,
+                );
+              }),
+            )
+          : [];
+
         company.services = await this.serviceRepository.find({
           where: { companies: { id: company.id } },
           take: 3,
@@ -358,6 +371,19 @@ export class CompanyService {
                 );
               }),
             )
+          : [];
+
+        company.tags = company.tags
+          ? await Promise.all(
+            company.tags.map(async (tag) => {
+              return translateEntity(
+                tag,
+                this.tagTranslationRepository,
+                'tag',
+                languageCode,
+              );
+            }),
+          )
           : [];
 
         company.services = await this.serviceRepository.find({
@@ -550,6 +576,19 @@ export class CompanyService {
                 );
               }),
             )
+          : [];
+
+        company.tags = company.tags
+          ? await Promise.all(
+            company.tags.map(async (tag) => {
+              return translateEntity(
+                tag,
+                this.tagTranslationRepository,
+                'tag',
+                languageCode,
+              );
+            }),
+          )
           : [];
 
         company.services = await this.serviceRepository.find({
@@ -771,6 +810,19 @@ export class CompanyService {
         }),
       );
 
+      company.tags = company.tags
+        ? await Promise.all(
+          company.tags.map(async (tag) => {
+            return translateEntity(
+              tag,
+              this.tagTranslationRepository,
+              'tag',
+              languageCode,
+            );
+          }),
+        )
+        : [];
+
       company.categories = await Promise.all(
         company.categories.map(async (category) => {
           return translateEntity(
@@ -932,6 +984,19 @@ export class CompanyService {
                     category,
                     this.categoryTranslationRepository,
                     'category',
+                    languageCode,
+                  );
+                }),
+              )
+            : [];
+
+          company.tags = company.tags
+            ? await Promise.all(
+                company.tags.map(async (tag) => {
+                  return translateEntity(
+                    tag,
+                    this.tagTranslationRepository,
+                    'tag',
                     languageCode,
                   );
                 }),
