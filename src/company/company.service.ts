@@ -21,6 +21,9 @@ import { Subcategory } from '../subcategory/entities/subcategory.entity';
 import { TagTranslation } from '../tag/entities/tagTranslation.entity';
 import { ServiceTranslation } from '../service/entities/serviceTranslation.entity';
 import axios from 'axios';
+import { CreateServiceTranslationDto } from '../service/dto/CreateServiceTranslationDto';
+import { DeleteServiceTranslationDto } from '../service/dto/DeleteServiceTranslationDto';
+import { UpdateServiceTranslationDto } from '../service/dto/UpdateServiceTranslationDto';
 
 const stripe = new Stripe(
   'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
@@ -375,15 +378,15 @@ export class CompanyService {
 
         company.tags = company.tags
           ? await Promise.all(
-            company.tags.map(async (tag) => {
-              return translateEntity(
-                tag,
-                this.tagTranslationRepository,
-                'tag',
-                languageCode,
-              );
-            }),
-          )
+              company.tags.map(async (tag) => {
+                return translateEntity(
+                  tag,
+                  this.tagTranslationRepository,
+                  'tag',
+                  languageCode,
+                );
+              }),
+            )
           : [];
 
         company.services = await this.serviceRepository.find({
@@ -580,15 +583,15 @@ export class CompanyService {
 
         company.tags = company.tags
           ? await Promise.all(
-            company.tags.map(async (tag) => {
-              return translateEntity(
-                tag,
-                this.tagTranslationRepository,
-                'tag',
-                languageCode,
-              );
-            }),
-          )
+              company.tags.map(async (tag) => {
+                return translateEntity(
+                  tag,
+                  this.tagTranslationRepository,
+                  'tag',
+                  languageCode,
+                );
+              }),
+            )
           : [];
 
         company.services = await this.serviceRepository.find({
@@ -812,15 +815,15 @@ export class CompanyService {
 
       company.tags = company.tags
         ? await Promise.all(
-          company.tags.map(async (tag) => {
-            return translateEntity(
-              tag,
-              this.tagTranslationRepository,
-              'tag',
-              languageCode,
-            );
-          }),
-        )
+            company.tags.map(async (tag) => {
+              return translateEntity(
+                tag,
+                this.tagTranslationRepository,
+                'tag',
+                languageCode,
+              );
+            }),
+          )
         : [];
 
       company.categories = await Promise.all(
@@ -1456,6 +1459,47 @@ export class CompanyService {
     return companies;
   }
 
+  private async createCompany(
+    name: string,
+    description: string,
+    address: string,
+    source: string,
+    affiliation: string,
+    subscription: string,
+    geoData: { latitude: number; longitude: number } | null,
+  ): Promise<Company> {
+    return this.companyRepository.create({
+      name,
+      description,
+      address,
+      source,
+      affiliation,
+      subscription,
+      geodata: geoData,
+    });
+  }
+
+  private async getGeoData(
+    address: string,
+  ): Promise<{ latitude: number; longitude: number } | null> {
+    const requestOptions = {
+      method: 'GET',
+    };
+    const encodedAddress = encodeURIComponent(address);
+    const geoDataResponse = await fetch(
+      `https://api.geoapify.com/v1/geocode/search?text=${encodedAddress}&format=json&apiKey=258f766d097e435984f577698acb7cc0`,
+      requestOptions,
+    );
+    const geoData: any = await geoDataResponse.json();
+
+    if (geoData.results && geoData.results.length > 0) {
+      const { lon, lat } = geoData.results[0];
+      return { latitude: lat, longitude: lon };
+    } else {
+      return null;
+    }
+  }
+
   async updateCompanyMetadata(
     companyId: number,
     metadata: any[],
@@ -1504,6 +1548,77 @@ export class CompanyService {
     return this.serviceService.updateService(serviceId, newData);
   }
 
+  async addServiceTranslation(
+    createServiceTranslationDto: CreateServiceTranslationDto,
+  ) {
+    const { serviceId, languageCode, name, description } =
+      createServiceTranslationDto;
+
+    // Проверяем, существует ли уже перевод для данной услуги и языка
+    let serviceTranslation = await this.serviceTranslationRepository.findOne({
+      where: {
+        serviceId,
+        languageCode,
+      },
+    });
+
+    if (serviceTranslation) {
+      // Обновляем существующий перевод
+      serviceTranslation.name = name;
+      serviceTranslation.description = description;
+    } else {
+      // Создаем новый перевод
+      serviceTranslation = this.serviceTranslationRepository.create({
+        serviceId,
+        languageCode,
+        name,
+        description,
+      });
+    }
+
+    return await this.serviceTranslationRepository.save(serviceTranslation);
+  }
+
+  async updateServiceTranslation(
+    updateServiceTranslationDto: UpdateServiceTranslationDto,
+  ) {
+    const { serviceId, languageCode, name, description } =
+      updateServiceTranslationDto;
+
+    const serviceTranslation = await this.serviceTranslationRepository.findOne({
+      where: { serviceId, languageCode },
+    });
+
+    if (!serviceTranslation) {
+      throw new NotFoundException('Service translation not found');
+    }
+
+    if (name) {
+      serviceTranslation.name = name;
+    }
+    if (description) {
+      serviceTranslation.description = description;
+    }
+
+    return await this.serviceTranslationRepository.save(serviceTranslation);
+  }
+
+  async deleteServiceTranslation(
+    deleteServiceTranslationDto: DeleteServiceTranslationDto,
+  ) {
+    const { serviceId, languageCode } = deleteServiceTranslationDto;
+
+    const serviceTranslation = await this.serviceTranslationRepository.findOne({
+      where: { serviceId, languageCode },
+    });
+
+    if (!serviceTranslation) {
+      throw new NotFoundException('Service translation not found');
+    }
+
+    return await this.serviceTranslationRepository.remove(serviceTranslation);
+  }
+
   async addSubService(
     companyId: number,
     serviceId: number,
@@ -1527,26 +1642,6 @@ export class CompanyService {
       companyId,
       subServiceData,
     );
-  }
-
-  private async createCompany(
-    name: string,
-    description: string,
-    address: string,
-    source: string,
-    affiliation: string,
-    subscription: string,
-    geoData: { latitude: number; longitude: number } | null,
-  ): Promise<Company> {
-    return this.companyRepository.create({
-      name,
-      description,
-      address,
-      source,
-      affiliation,
-      subscription,
-      geodata: geoData,
-    });
   }
 
   async updateCompany(data: UpdateCompanyDto): Promise<Company> {
@@ -1628,26 +1723,5 @@ export class CompanyService {
     company = await this.companyRepository.save(company);
 
     return company;
-  }
-
-  private async getGeoData(
-    address: string,
-  ): Promise<{ latitude: number; longitude: number } | null> {
-    const requestOptions = {
-      method: 'GET',
-    };
-    const encodedAddress = encodeURIComponent(address);
-    const geoDataResponse = await fetch(
-      `https://api.geoapify.com/v1/geocode/search?text=${encodedAddress}&format=json&apiKey=258f766d097e435984f577698acb7cc0`,
-      requestOptions,
-    );
-    const geoData: any = await geoDataResponse.json();
-
-    if (geoData.results && geoData.results.length > 0) {
-      const { lon, lat } = geoData.results[0];
-      return { latitude: lat, longitude: lon };
-    } else {
-      return null;
-    }
   }
 }

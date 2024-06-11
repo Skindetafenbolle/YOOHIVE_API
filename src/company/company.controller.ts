@@ -17,6 +17,7 @@ import { CompanyMetadatum } from '../company-metadata/entities/company-metadatum
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
@@ -28,6 +29,9 @@ import { RolesGuard } from '../auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Service } from '../service/entities/service.entity';
 import { UpdateCompanyDto } from './dto/UpdateCompanyDto';
+import { CreateServiceTranslationDto } from '../service/dto/CreateServiceTranslationDto';
+import { DeleteServiceTranslationDto } from '../service/dto/DeleteServiceTranslationDto';
+import { UpdateServiceTranslationDto } from '../service/dto/UpdateServiceTranslationDto';
 
 @Controller('company')
 @ApiTags('company')
@@ -578,6 +582,55 @@ export class CompanyController {
       source,
       category,
       subcategories,
+    );
+  }
+
+  @Post('addServiceTranslation')
+  @ApiOperation({ summary: 'Add a service translation' })
+  @ApiResponse({
+    status: 201,
+    description: 'The translation has been successfully created.',
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async addServiceTranslation(
+    @Body() createServiceTranslationDto: CreateServiceTranslationDto,
+  ) {
+    return this.companyService.addServiceTranslation(
+      createServiceTranslationDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @Put('updateServiceTranslation')
+  @ApiOperation({ summary: 'Update a service translation' })
+  @ApiResponse({
+    status: 200,
+    description: 'The translation has been successfully updated.',
+  })
+  @ApiResponse({ status: 404, description: 'Service translation not found' })
+  async updateServiceTranslation(
+    @Body() updateServiceTranslationDto: UpdateServiceTranslationDto,
+  ) {
+    return this.companyService.updateServiceTranslation(
+      updateServiceTranslationDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['companyAdmin', 'superAdmin'])
+  @Delete('deleteServiceTranslation')
+  @ApiOperation({ summary: 'Delete a service translation' })
+  @ApiResponse({
+    status: 200,
+    description: 'The translation has been successfully deleted.',
+  })
+  @ApiResponse({ status: 404, description: 'Service translation not found' })
+  async deleteServiceTranslation(
+    @Body() deleteServiceTranslationDto: DeleteServiceTranslationDto,
+  ) {
+    return this.companyService.deleteServiceTranslation(
+      deleteServiceTranslationDto,
     );
   }
 }

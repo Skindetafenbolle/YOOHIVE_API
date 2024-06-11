@@ -19,4 +19,7 @@ export class ServiceTranslation {
     onDelete: 'CASCADE',
   })
   service: Service;
+
+  @Column()
+  serviceId: number;
 }

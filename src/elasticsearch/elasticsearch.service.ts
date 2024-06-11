@@ -10,9 +10,9 @@ export class ElasticSearchService {
 
   constructor(private readonly elasticsearchService: ElasticsearchService) {
     this.client = new Client({
-      node: 'https://f4ac3cf54ec54733b6743b6c31585ff4.es.us-east-1.aws.elastic.cloud:443',
+      node: 'https://20656092aea34b3daf08bf7c2a348eba.us-central1.gcp.cloud.es.io:443',
       auth: {
-        apiKey: 'VmN0Z29JOEJILWM3TWlIbTA3ZDg6eXhTZDdYdzRSeDJOaWVXNmhTc0lQUQ==',
+        apiKey: 'YnA4R0FaQUJjWWQtajJTXzRHUGQ6ZlpiXzhEbmJRV2VJbVd1VHFxSVdDZw==',
       },
     });
   }
