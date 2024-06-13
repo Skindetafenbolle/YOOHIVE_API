@@ -633,4 +633,9 @@ export class CompanyController {
       deleteServiceTranslationDto,
     );
   }
+
+  @Post('sendNotification')
+  async sendNotif(@Body() data: any[]) {
+    return this.companyService.sendMessageToChannel(data);
+  }
 }

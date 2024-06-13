@@ -24,12 +24,17 @@ import axios from 'axios';
 import { CreateServiceTranslationDto } from '../service/dto/CreateServiceTranslationDto';
 import { DeleteServiceTranslationDto } from '../service/dto/DeleteServiceTranslationDto';
 import { UpdateServiceTranslationDto } from '../service/dto/UpdateServiceTranslationDto';
+import * as TelegramBot from 'node-telegram-bot-api';
 
 const stripe = new Stripe(
-  'sk_test_51PHkSMH7KwidO226EzqE1oRuQBc1f8xkRfKfrTVyKurfBGDnwPmRwlKGruWxVKrRRe1b7yCsdHHLnULU7gW88hgU00ZKGwcsSL',
+  'sk_test_51PHhnCBnvwZsAoC1cWQWXwzwbtv4V4BhLhEHWHZUovvPiMRCOCFbfij91bL74is1peOMQe77iWdYhe9K64xujwbi00gzv1MyKO',
 );
+
+const token = '7413729825:AAGjbpTgIPGxPwUfgWzWhUY8uI6Gj6TwvO0';
+
 @Injectable()
 export class CompanyService {
+  private bot: TelegramBot;
   constructor(
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
@@ -56,7 +61,17 @@ export class CompanyService {
     private readonly tagTranslationRepository: Repository<TagTranslation>,
     @InjectRepository(ServiceTranslation)
     private serviceTranslationRepository: Repository<ServiceTranslation>,
-  ) {}
+  ) {
+    this.bot = new TelegramBot(token, { polling: true });
+
+    this.bot.onText(/\/start/, (msg) => {
+      const chatId = msg.chat.id;
+      this.bot.sendMessage(
+        chatId,
+        'Привет! Это бот yooHiveBot для оповещения о поступлении регистрации.',
+      );
+    });
+  }
 
   private async translateText(
     text: string,
@@ -78,6 +93,24 @@ export class CompanyService {
     } catch (error) {
       console.error('Error translating text:', error);
       return text;
+    }
+  }
+
+  async sendMessageToChannel(data: any[]) {
+    try {
+      for (const item of data) {
+        const name = item.name;
+        const phone = item.phones;
+        const email = item.email;
+        const text = `Nowa firma:\nNazwa: ${name}\nTelefon: ${phone}\nE-mail: ${email}`;
+
+        await this.bot.sendMessage('-1002211989027', text);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      return { success: false, error: error.message };
     }
   }
 
