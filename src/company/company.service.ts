@@ -25,13 +25,14 @@ import { CreateServiceTranslationDto } from '../service/dto/CreateServiceTransla
 import { DeleteServiceTranslationDto } from '../service/dto/DeleteServiceTranslationDto';
 import { UpdateServiceTranslationDto } from '../service/dto/UpdateServiceTranslationDto';
 import * as TelegramBot from 'node-telegram-bot-api';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as process from 'node:process';
 
-const stripe = new Stripe(
-  'sk_test_51PHhnCBnvwZsAoC1cWQWXwzwbtv4V4BhLhEHWHZUovvPiMRCOCFbfij91bL74is1peOMQe77iWdYhe9K64xujwbi00gzv1MyKO',
-);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const token = '7413729825:AAGjbpTgIPGxPwUfgWzWhUY8uI6Gj6TwvO0';
-
+const stripe = new Stripe(process.env.STRIPE_KEY);
+const token = process.env.TG_BOT;
 @Injectable()
 export class CompanyService {
   private bot: TelegramBot;
