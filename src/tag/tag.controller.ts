@@ -8,7 +8,7 @@ import {
   NotFoundException,
   Put,
   UseGuards,
-  SetMetadata,
+  SetMetadata, Query,
 } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -42,16 +42,16 @@ export class TagController {
     description: 'List of all tags',
     type: [CreateTagDto],
   })
-  async getAllTags(): Promise<Tag[]> {
-    return await this.tagService.getAllTags();
+  async getAllTagsWithTranslation(@Query('languageCode') languageCode: string) {
+    return await this.tagService.getAllTagsWithTranslations(languageCode);
   }
 
-  @Get(':id')
-  @ApiParam({ name: 'id', description: 'The ID of the tag' })
-  @ApiResponse({ status: 200, description: 'Tag found', type: CreateTagDto })
-  async getTagById(@Param('id') id: number): Promise<Tag> {
-    return await this.tagService.getTagById(id);
-  }
+  // @Get(':id')
+  // @ApiParam({ name: 'id', description: 'The ID of the tag' })
+  // @ApiResponse({ status: 200, description: 'Tag found', type: CreateTagDto })
+  // async getTagById(@Param('id') id: number): Promise<Tag> {
+  //   return await this.tagService.getTagById(id);
+  // }
 
   @Put('edit/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)

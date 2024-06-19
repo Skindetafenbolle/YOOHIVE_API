@@ -43,6 +43,22 @@ export class TagService {
     return await this.tagRepository.find();
   }
 
+  async getAllTagsWithTranslations(languageCode: string): Promise<any[]> {
+    const tags = await this.tagRepository.find({
+      relations: ['translations'],
+    });
+    return tags.map((tag) => {
+      const translation = tag.translations.find(
+          (t) => t.languageCode === languageCode,
+      );
+      return {
+        ...tag,
+        name: translation ? translation.name : tag.name,
+        description: translation ? translation.description : null,
+      };
+    });
+  }
+
   async getTagById(id: number): Promise<Tag> {
     const tag = await this.tagRepository.findOne({
       where: {
