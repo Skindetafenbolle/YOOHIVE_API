@@ -49,7 +49,7 @@ export class TagService {
     });
     return tags.map((tag) => {
       const translation = tag.translations.find(
-          (t) => t.languageCode === languageCode,
+        (t) => t.languageCode === languageCode,
       );
       return {
         ...tag,

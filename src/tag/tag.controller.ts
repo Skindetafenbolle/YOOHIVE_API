@@ -8,7 +8,8 @@ import {
   NotFoundException,
   Put,
   UseGuards,
-  SetMetadata, Query,
+  SetMetadata,
+  Query,
 } from '@nestjs/common';
 import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
